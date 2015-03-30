@@ -10,26 +10,26 @@
 
 #include <pthread.h>
 #include <semaphore.h>
+
 #include <stdio.h>
-#include <stdlib.h>
 #include <iostream>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <fstream>
+#include <string.h>
 
 //Struct UCState{controlSignals}
 //Struct ALUCState{controlSignals}
 
 /* Operation Constants */
 #define CLOCK_DELAY_TIME 1000
-
 #define PIPELINE_SIZE 5
 
-/* Operation user options */
-bool nodClock = false;
-
 /* General Purpose Functions */
-//fetchJobFromFile()
-void simulateClockDelay(){
-	if (!nodClock) sleep(CLOCK_DELAY_TIME);
-}
+void fetchJobFromFile(const char* filename, const char* noExtensionFilename);
+void simulateClockDelay();
+void disableClockDelay();
 //signExtend16to32()
 //shiftLeft2()
 //

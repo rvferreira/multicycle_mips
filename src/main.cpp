@@ -8,7 +8,6 @@
 // Description : Multicycle CPU Mips processor
 //============================================================================
 
-#include <unistd.h>
 #include <set>
 #include <map>
 
@@ -62,10 +61,10 @@ int main(int argc, char** argv) {
     }
 
 	if (option == "--nodclock") {
-		nodClock = true;
+		disableClockDelay();
 	}
 
-	//fetchJobFromFile()
+	fetchJobFromFile(filename.c_str(), noExtentionFilename.c_str());
 	//resourcesInit()
 	//jobStart()
 	//jobEndSync();
