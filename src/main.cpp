@@ -69,9 +69,10 @@ int main(int argc, char** argv) {
 	//jobStart()
 	//jobEndSync();
 
+
 	fflush(0);
+	printf("Press any key to terminate.\n");
 	getchar();
-	printf("Exiting .\n");
 
     return EXIT_SUCCESS;
 }
