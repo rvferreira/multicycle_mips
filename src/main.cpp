@@ -8,14 +8,11 @@
 // Description : Multicycle CPU Mips processor
 //============================================================================
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
 #include <unistd.h>
 #include <set>
 #include <map>
 
-
+#include "cpu_resources.h"
 
 using namespace std;
 
@@ -65,7 +62,7 @@ int main(int argc, char** argv) {
     }
 
 	if (option == "--nodclock") {
-
+		nodClock = true;
 	}
 
 	//fetchJobFromFile()
