@@ -40,7 +40,6 @@ using namespace std;
 
 bool processInput(int argc, char** argv, string& option, string &filename);
 
-
 int main(int argc, char** argv) {
     string option   = "";
     string filename = "";
@@ -52,7 +51,7 @@ int main(int argc, char** argv) {
 
     // Remove the extension
     string noExtentionFilename = filename.substr(0, filename.find_last_of("."));
-    cout << noExtentionFilename << endl;
+    cout << SEPARATOR << "Fetching instructions from " << noExtentionFilename << "." << endl;
 
 
     if (option == "--debug") {
@@ -65,13 +64,14 @@ int main(int argc, char** argv) {
 	}
 
 	fetchJobFromFile(filename.c_str(), noExtentionFilename.c_str());
-	//resourcesInit()
+	resourcesInit();
 	//jobStart()
 	//jobEndSync();
 
 
 	fflush(0);
-	printf("Press any key to terminate.\n");
+	pthread_join(memory_handle, 0);
+	printf("\nPress any key to terminate.\n");
 	getchar();
 
     return EXIT_SUCCESS;

@@ -22,9 +22,15 @@
 //Struct UCState{controlSignals}
 //Struct ALUCState{controlSignals}
 
+#define SEPARATOR "===============================================\n"
+
 /* Operation Constants */
 #define CLOCK_DELAY_TIME 1000
 #define PIPELINE_SIZE 5
+
+typedef struct { char byte[4]; } dataBlock;
+
+extern FILE* bincode;
 
 /* General Purpose Functions */
 void fetchJobFromFile(const char* filename, const char* noExtensionFilename);

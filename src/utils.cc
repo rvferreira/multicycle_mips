@@ -9,27 +9,39 @@
 
 bool nodClock = false;
 
-void convertTextMIPStoBinMIPS(FILE* origin, FILE* decoded){
-	char buffer[4];
-	fgets(buffer, 4, origin);
-	fputs(buffer, decoded);
-	//TODO loop and conversion
+void convertTextMIPStoBinMIPS(FILE* origin, FILE* decoded) {
+	fseek(origin, 0, SEEK_END);
+	int size = (int) ftell(origin);
+	rewind(origin);
+
+	if (size) {
+		char *buffer = (char *) malloc(sizeof(char) * size);
+		fread(buffer, 1, size, origin);
+
+		fputs(buffer, decoded);
+		free(buffer);
+		//TODO iterate through lines and convert
+	}
+	else {
+		std::cout << "Empty origin file" << std::endl;
+		exit(0);
+	}
 }
 
-void fetchJobFromFile(const char* filename, const char* noExtensionFilename){
+void fetchJobFromFile(const char* filename, const char* noExtensionFilename) {
 	FILE* origin = fopen(filename, "rb");
-	FILE* decoded = fopen(strcat((char*) noExtensionFilename,".bin"), "wb");
+	bincode = fopen(strcat((char*) noExtensionFilename, ".bin"), "wb+");
 
-	convertTextMIPStoBinMIPS(origin, decoded);
+	convertTextMIPStoBinMIPS(origin, bincode);
 
 	fclose(origin);
-	fclose(decoded);
 }
 
-void simulateClockDelay(){
-	if (!nodClock) sleep(CLOCK_DELAY_TIME);
+void simulateClockDelay() {
+	if (!nodClock)
+		sleep(CLOCK_DELAY_TIME);
 }
 
-void disableClockDelay(){
+void disableClockDelay() {
 	nodClock = true;
 }
