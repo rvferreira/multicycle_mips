@@ -19,14 +19,32 @@
 #include <fstream>
 #include <string.h>
 
-//Struct UCState{controlSignals}
-//Struct ALUCState{controlSignals}
-
 #define SEPARATOR "===============================================\n"
 
 /* Operation Constants */
-#define CLOCK_DELAY_TIME 1000
-#define PIPELINE_SIZE 5
+#define CLOCK_DELAY_TIME 500
+#define CYCLES_COUNT 5
+
+struct FetchedInstruction{
+	bool PCWriteCond,
+		PCWrite,
+		IorD,
+		MemRead,
+		MemWrite,
+		MemToReg,
+		IRWrite,
+		PCSource,
+		ALUOp,
+		ALUSrcB,
+		ALUSrcA,
+		RegWrite,
+		RegDst;
+};
+
+struct SyncedInstruction{
+	FetchedInstruction controlSignals;
+	sem_t PC_read;
+};
 
 typedef struct { char byte[4]; } dataBlock;
 
@@ -36,8 +54,5 @@ extern FILE* bincode;
 void fetchJobFromFile(const char* filename, const char* noExtensionFilename);
 void simulateClockDelay();
 void disableClockDelay();
-//signExtend16to32()
-//shiftLeft2()
-//
 
 #endif /* UTILS_H_ */

@@ -11,6 +11,7 @@
 	Failure in the " THREAD_NAME " thread Initialization \n"
 
 #include "utils.h"
+#include <list>
 
 extern pthread_t memory_handle,
 		ALU_handle,
@@ -24,6 +25,7 @@ extern pthread_t memory_handle,
 		mux_PC_handle;
 
 extern dataBlock *memoryBank;
+extern int PC;
 
 //struct jobInstruction {syncMutexes, UCState, ALUCState}
 //jobInstruction list pipeline[PIPELINE_SIZE]
