@@ -43,7 +43,7 @@ struct FetchedInstruction{
 
 struct SyncedInstruction{
 	FetchedInstruction controlSignals;
-	sem_t PC_read;
+	sem_t concludedCycle[CYCLES_COUNT];
 };
 
 typedef struct { char byte[4]; } dataBlock;
