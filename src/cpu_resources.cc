@@ -90,6 +90,26 @@ void *clock(void *thread_id) {
 	pthread_exit(0);
 }
 
+void *mux_memoryAdress(void *thread_id){
+
+	pthread_exit(0);
+}
+
+void *mux_WriteRegIR(void *thread_id){
+
+	pthread_exit(0);
+}
+
+void *mux_WriteDataIR(void *thread_id){
+
+	pthread_exit(0);
+}
+
+void *mux_signExtend(void *thread_id){
+
+	pthread_exit(0);
+}
+
 void resourcesInit() {
 	sem_init(&PC_updated, 0, 0);
 	if (pthread_create(&memory_handle, 0, memory, NULL) != 0) {
@@ -98,6 +118,22 @@ void resourcesInit() {
 	}
 	if (pthread_create(&clock_handle, 0, clock, NULL) != 0) {
 		cout << THREAD_INIT_FAIL("Clock");
+		exit(0);
+	}
+	if (pthread_create(&mux_memoryAdress_handle, 0, mux_memoryAdress, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("Mux Memory Address");
+		exit(0);
+	}
+	if (pthread_create(&mux_WriteRegIR_handle, 0, mux_WriteRegIR, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("Mux WriteRegIR");
+		exit(0);
+	}
+	if (pthread_create(&mux_WriteDataIR_handle, 0, mux_WriteDataIR, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("Mux WriteDataIR");
+		exit(0);
+	}
+	if (pthread_create(&signExtend_handle, 0, mux_signExtend, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("Mux Sign Extend");
 		exit(0);
 	}
 }
