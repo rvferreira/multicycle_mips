@@ -19,8 +19,11 @@ struct UC {
 
 int PC;
 
+sem_t instructions_updated, instructions_free;
+
 // sem_updated means that its information is ready to be read
 // sem_free means that it's available for writing
+// syncs mutexes
 sem_t PC_updated, PC_free, mux_memoryAdress_updated, mux_memoryAdress_free,
 		clockedMemory_updated, clockedMemory_free, instructionRegister_updated,
 		instructionRegister_free, mux_WriteRegIR_updated, mux_WriteRegIR_free,
@@ -225,7 +228,8 @@ void *mux_PC(void *thread_id) {
 		sem_wait(&PC_free);
 
 		simulateClockDelay();
-		if (debugMode) cout << "Done! PC incremented to " << ++PC << endl;
+		PC++;
+		if (debugMode) cout << "Done! PC incremented to " << PC << endl;
 
 		sem_post(&PC_updated);
 		sem_post(&ALU_free);
@@ -295,6 +299,10 @@ void semaphores_init() {
 
 void resourcesInit() {
 	semaphores_init();
+
+	sem_init(&instructions_updated, 0, 0);
+	sem_init(&instructions_free, 0, CYCLES_COUNT);
+
 	if (pthread_create(&memory_handle, 0, memory, NULL) != 0) {
 		cout << THREAD_INIT_FAIL("Memory");
 		exit(0);
