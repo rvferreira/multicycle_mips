@@ -113,6 +113,41 @@ void *mux_signExtend(void *thread_id){
 	pthread_exit(0);
 }
 
+void *shiftLeft2(void *thread_id){
+
+	pthread_exit(0);
+}
+
+void *mux_ALUA(void *thread_id){
+
+	pthread_exit(0);
+}
+
+void *ALU(void *thread_id){
+
+	pthread_exit(0);
+}
+
+void *mux_ALUB(void *thread_id){
+
+	pthread_exit(0);
+}
+
+void *mux_PC(void *thread_id){
+
+	pthread_exit(0);
+}
+
+void *and_PC(void *thread_id){
+
+	pthread_exit(0);
+}
+
+void *or_PC(void *thread_id){
+
+	pthread_exit(0);
+}
+
 void resourcesInit() {
 	sem_init(&PC_updated, 0, 0);
 	sem_init(&PC_free, 0, 0);
@@ -125,19 +160,47 @@ void resourcesInit() {
 		exit(0);
 	}
 	if (pthread_create(&mux_memoryAdress_handle, 0, mux_memoryAdress, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("Mux Memory Address");
+		cout << THREAD_INIT_FAIL("MuxMemoryAddress");
 		exit(0);
 	}
 	if (pthread_create(&mux_WriteRegIR_handle, 0, mux_WriteRegIR, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("Mux WriteRegIR");
+		cout << THREAD_INIT_FAIL("MuxWriteRegIR");
 		exit(0);
 	}
 	if (pthread_create(&mux_WriteDataIR_handle, 0, mux_WriteDataIR, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("Mux WriteDataIR");
+		cout << THREAD_INIT_FAIL("MuxWriteDataIR");
 		exit(0);
 	}
 	if (pthread_create(&signExtend_handle, 0, mux_signExtend, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("Mux Sign Extend");
+		cout << THREAD_INIT_FAIL("MuxSign Extend");
+		exit(0);
+	}
+	if (pthread_create(&shiftLeft2_handle, 0, shiftLeft2, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("Shiftleft2");
+		exit(0);
+	}
+	if (pthread_create(&mux_ALUA_handle, 0, mux_ALUA, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("MuxALUA");
+		exit(0);
+	}
+	if (pthread_create(&ALU_handle, 0, ALU, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("ALU");
+		exit(0);
+	}
+	if (pthread_create(&mux_ALUB_handle, 0, mux_ALUB, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("MuxALUB");
+		exit(0);
+	}
+	if (pthread_create(&mux_PC_handle, 0, mux_PC, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("MuxPC");
+		exit(0);
+	}
+	if (pthread_create(&and_PC_handle, 0, and_PC, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("AND PC");
+		exit(0);
+	}
+	if (pthread_create(&or_pc_handle, 0, or_PC, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("OR PC");
 		exit(0);
 	}
 }
