@@ -18,14 +18,23 @@ struct UC {
 } UC;
 
 int PC;
-sem_t PC_updated, PC_free;
 
-pthread_t memory_handle, clockedMemory_handle, mux_memoryAdress_handle,
-		mux_WriteRegIR_handle, mux_WriteDataIR_handle, signExtend_handle,
-		shiftLeft2_handle, mux_ALUA_handle, ALU_handle, mux_ALUB_handle, mux_PC_handle,
-		and_PC_handle, or_pc_handle;
+// sem_updated means that its information is ready to be read
+// sem_free means that it's available for writing
+sem_t PC_updated, PC_free, mux_memoryAdress_updated, mux_memoryAdress_free,
+		clockedMemory_updated, clockedMemory_free, instructionRegister_updated,
+		instructionRegister_free, mux_WriteRegIR_updated, mux_WriteRegIR_free,
+		mux_WriteDataIR_updated, mux_WriteDataIR_free, signExtend_updated,
+		signExtend_free, shiftLeft2_updated, shiftLeft2_free, mux_ALUA_updated,
+		mux_ALUA_free, ALU_updated, ALU_free, mux_ALUB_updated, mux_ALUB_free,
+		mux_PC_updated, mux_PC_free;
 
-void setControlSignals (SyncedInstruction *job, dataBlock instructionToFetch){
+pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle,
+		mux_memoryAdress_handle, mux_WriteRegIR_handle, mux_WriteDataIR_handle,
+		signExtend_handle, shiftLeft2_handle, mux_ALUA_handle, ALU_handle,
+		mux_ALUB_handle, mux_PC_handle, and_PC_handle, or_pc_handle;
+
+void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 	//TODO implement masks usage
 	job->controlSignals.PCWriteCond = 0;
 	job->controlSignals.PCWrite = 0;
@@ -42,7 +51,7 @@ void setControlSignals (SyncedInstruction *job, dataBlock instructionToFetch){
 	job->controlSignals.RegDst = 0;
 }
 
-void createAndEnqueueJob(bool isNop){ //TODO isnop implementation
+void createAndEnqueueJob(bool isNop) { //TODO isnop implementation
 	SyncedInstruction *newJob = new SyncedInstruction;
 	setControlSignals(newJob, memoryBank[PC]);
 	UC.jobs.push_back(*newJob);
@@ -79,84 +88,224 @@ void *memory(void *thread_id) {
 	fclose(bincode);
 	/*Execution init*/
 	PC = 0;
+	if (debugMode) cout << "PC has been initiated in " << PC << endl;
 	sem_post(&PC_updated);
 	pthread_exit(0);
 }
 
-void *clockedMemoryAccess(void *thread_id) {
-	while(1){
-		simulateClockDelay();
+void *mux_memoryAdress(void *thread_id) {
+	while (1) {
 		sem_wait(&PC_updated);
-		createAndEnqueueJob(false);
+		sem_wait(&mux_memoryAdress_free);
+
+		if (debugMode) cout << "1" << endl;
+
+		sem_post(&mux_memoryAdress_updated);
 		sem_post(&PC_free);
 	}
 	pthread_exit(0);
 }
 
-void *mux_memoryAdress(void *thread_id){
+void *clockedMemoryAccess(void *thread_id) {
+	while (1) {
+		//simulateClockDelay();
+		sem_wait(&mux_memoryAdress_updated);
+		sem_wait(&clockedMemory_free);
 
+		if (debugMode) cout << "2" << endl;
+		//mux0 createAndEnqueueJob(false);
+		//mux1 sw
+
+		sem_post(&clockedMemory_updated);
+		sem_post(&mux_memoryAdress_free);
+	}
 	pthread_exit(0);
 }
 
-void *mux_WriteRegIR(void *thread_id){
+void *instructionRegister(void *thread_id) {
+	while (1) {
+		sem_wait(&clockedMemory_updated);
+		sem_wait(&instructionRegister_free);
 
+		if (debugMode) cout << "3" << endl;
+
+		sem_post(&instructionRegister_updated);
+		sem_post(&clockedMemory_free);
+	}
 	pthread_exit(0);
 }
 
-void *mux_WriteDataIR(void *thread_id){
+void *mux_WriteRegIR(void *thread_id) {
+	while(1){
+		sem_wait(&instructionRegister_updated);
+		sem_wait(&mux_WriteRegIR_free);
 
+		if (debugMode) cout << "4" << endl;
+
+		sem_post(&mux_WriteRegIR_updated);
+		sem_post(&instructionRegister_free);
+	}
 	pthread_exit(0);
 }
 
-void *mux_signExtend(void *thread_id){
+void *mux_WriteDataIR(void *thread_id) {
+	/*while(1){
+		sem_wait(&anterior_updated);
+		sem_wait(&proprio_free);
 
+		sem_post(&proprio_updated);
+		sem_post(&anterior_free);
+	}*/
 	pthread_exit(0);
 }
 
-void *shiftLeft2(void *thread_id){
+void *mux_signExtend(void *thread_id) {
+	/*while(1){
+		sem_wait(&anterior_updated);
+		sem_wait(&proprio_free);
 
+		sem_post(&proprio_updated);
+		sem_post(&anterior_free);
+	}*/
 	pthread_exit(0);
 }
 
-void *mux_ALUA(void *thread_id){
+void *shiftLeft2(void *thread_id) {
+	/*while(1){
+		sem_wait(&anterior_updated);
+		sem_wait(&proprio_free);
 
+		sem_post(&proprio_updated);
+		sem_post(&anterior_free);
+	}*/
 	pthread_exit(0);
 }
 
-void *ALU(void *thread_id){
+void *mux_ALUA(void *thread_id) {
+	while(1){
+		sem_wait(&mux_WriteRegIR_updated);
+		sem_wait(&mux_ALUA_free);
 
+		if (debugMode) cout << "5" << endl;
+
+		sem_post(&mux_ALUA_updated);
+		sem_post(&mux_WriteRegIR_free);
+	}
 	pthread_exit(0);
 }
 
-void *mux_ALUB(void *thread_id){
+void *ALU(void *thread_id) {
+	while(1){
+		sem_wait(&mux_ALUA_updated);
+		sem_wait(&ALU_free);
 
+		if (debugMode) cout << "6" << endl;
+
+		sem_post(&ALU_updated);
+		sem_post(&mux_ALUA_free);
+
+	}
 	pthread_exit(0);
 }
 
-void *mux_PC(void *thread_id){
+void *mux_ALUB(void *thread_id) {
+	/*while(1){
+		sem_wait(&anterior_updated);
+		sem_wait(&proprio_free);
 
+		sem_post(&proprio_updated);
+		sem_post(&anterior_free);
+	}*/
 	pthread_exit(0);
 }
 
-void *and_PC(void *thread_id){
+void *mux_PC(void *thread_id) {
+	while(1){
+		sem_wait(&ALU_updated);
+		sem_wait(&PC_free);
 
+		simulateClockDelay();
+		if (debugMode) cout << "Done! PC incremented to " << ++PC << endl;
+
+		sem_post(&PC_updated);
+		sem_post(&ALU_free);
+	}
 	pthread_exit(0);
 }
 
-void *or_PC(void *thread_id){
+void *and_PC(void *thread_id) {
+	/*while(1){
+		sem_wait(&anterior_updated);
+		sem_wait(&proprio_free);
 
+		sem_post(&proprio_updated);
+		sem_post(&anterior_free);
+	}*/
 	pthread_exit(0);
+}
+
+void *or_PC(void *thread_id) {
+	/*while(1){
+		sem_wait(&anterior_updated);
+		sem_wait(&proprio_free);
+
+		sem_post(&proprio_updated);
+		sem_post(&anterior_free);
+	}*/
+	pthread_exit(0);
+}
+
+void semaphores_init() {
+	sem_init(&PC_updated, 0, 0);
+	sem_init(&PC_free, 0, 1);
+
+	sem_init(&mux_memoryAdress_updated, 0, 0);
+	sem_init(&mux_memoryAdress_free, 0, 1);
+
+	sem_init(&clockedMemory_updated, 0, 0);
+	sem_init(&clockedMemory_free, 0, 1);
+
+	sem_init(&instructionRegister_updated, 0, 0);
+	sem_init(&instructionRegister_free, 0, 1);
+
+	sem_init(&mux_WriteRegIR_updated, 0, 0);
+	sem_init(&mux_WriteRegIR_free, 0, 1);
+
+	sem_init(&mux_WriteDataIR_updated, 0, 0);
+	sem_init(&mux_WriteDataIR_free, 0, 1);
+
+	sem_init(&signExtend_updated, 0, 0);
+	sem_init(&signExtend_free, 0, 1);
+
+	sem_init(&shiftLeft2_updated, 0, 0);
+	sem_init(&shiftLeft2_free, 0, 1);
+
+	sem_init(&mux_ALUA_updated, 0, 0);
+	sem_init(&mux_ALUA_free, 0, 1);
+
+	sem_init(&ALU_updated, 0, 0);
+	sem_init(&ALU_free, 0, 1);
+
+	sem_init(&mux_ALUB_updated, 0, 0);
+	sem_init(&mux_ALUB_free, 0, 1);
+
+	sem_init(&mux_PC_updated, 0, 0);
+	sem_init(&mux_PC_free, 0, 1);
 }
 
 void resourcesInit() {
-	sem_init(&PC_updated, 0, 0);
-	sem_init(&PC_free, 0, 0);
+	semaphores_init();
 	if (pthread_create(&memory_handle, 0, memory, NULL) != 0) {
 		cout << THREAD_INIT_FAIL("Memory");
 		exit(0);
 	}
 	if (pthread_create(&clockedMemory_handle, 0, clockedMemoryAccess, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("Clock");
+		//TODO incorporate clocked memory into memory
+		cout << THREAD_INIT_FAIL("Clocked Memory");
+		exit(0);
+	}
+	if (pthread_create(&instructionRegister_handle, 0, instructionRegister, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("Instruction Register");
 		exit(0);
 	}
 	if (pthread_create(&mux_memoryAdress_handle, 0, mux_memoryAdress, NULL) != 0) {

@@ -8,6 +8,7 @@
 #include "utils.h"
 
 bool nodClock = false;
+bool debugMode = false;
 
 void convertTextMIPStoBinMIPS(FILE* origin, FILE* decoded) {
 	fseek(origin, 0, SEEK_END);
@@ -39,7 +40,7 @@ void fetchJobFromFile(const char* filename, const char* noExtensionFilename) {
 
 void simulateClockDelay() {
 	if (!nodClock)
-		sleep(CLOCK_DELAY_TIME);
+		for (long int i = 0; i < CLOCK_DELAY_TIME*1000; i++){}
 }
 
 void disableClockDelay() {

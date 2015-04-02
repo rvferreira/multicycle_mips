@@ -22,7 +22,7 @@
 #define SEPARATOR "===============================================\n"
 
 /* Operation Constants */
-#define CLOCK_DELAY_TIME 500
+#define CLOCK_DELAY_TIME 200000
 #define CYCLES_COUNT 5
 
 struct FetchedInstruction{
@@ -49,6 +49,7 @@ struct SyncedInstruction{
 typedef struct { char byte[4]; } dataBlock;
 
 extern FILE* bincode;
+extern bool debugMode;
 
 /* General Purpose Functions */
 void fetchJobFromFile(const char* filename, const char* noExtensionFilename);

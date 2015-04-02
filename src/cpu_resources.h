@@ -13,16 +13,10 @@
 #include "utils.h"
 #include <list>
 
-extern pthread_t memory_handle,
-		ALU_handle,
-		mux_memoryAdress_handle,
-		mux_WriteRegIR_handle,
-		mux_WriteDataIR_handle,
-		signExtend_handle,
-		shiftLeft2_handle,
-		mux_ALUA_handle,
-		mux_ALUB_handle,
-		mux_PC_handle;
+extern pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle,
+		mux_memoryAdress_handle, mux_WriteRegIR_handle, mux_WriteDataIR_handle,
+		signExtend_handle, shiftLeft2_handle, mux_ALUA_handle, ALU_handle,
+		mux_ALUB_handle, mux_PC_handle, and_PC_handle, or_pc_handle;
 
 extern dataBlock *memoryBank;
 extern int PC;
