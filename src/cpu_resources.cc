@@ -18,6 +18,7 @@ struct UC {
 } UC;
 
 int PC;
+int MDR;
 
 sem_t instructions_updated, instructions_free;
 
@@ -25,9 +26,11 @@ sem_t instructions_updated, instructions_free;
 // sem_free means that it's available for writing
 // syncs mutexes
 sem_t PC_updated, PC_free, mux_memoryAdress_updated, mux_memoryAdress_free,
-		clockedMemory_updated, clockedMemory_free, instructionRegister_updated,
-		instructionRegister_free, mux_WriteRegIR_updated, mux_WriteRegIR_free,
-		mux_WriteDataIR_updated, mux_WriteDataIR_free, signExtend_updated,
+		clockedMemory_updated, clockedMemory_free, MDR_updated, MDR_free,
+		instructionRegister_updated, instructionRegister_free,
+		mux_WriteRegIR_updated, mux_WriteRegIR_free, mux_WriteDataIR_updated,
+		mux_WriteDataIR_free, registers_updated_0, registers_updated_1,
+		registers_free, registers_free_0, registers_free_1, signExtend_updated,
 		signExtend_free, shiftLeft2_updated, shiftLeft2_free, mux_ALUA_updated,
 		mux_ALUA_free, ALU_updated, ALU_free, mux_ALUB_updated, mux_ALUB_free,
 		mux_PC_updated, mux_PC_free;
@@ -35,7 +38,8 @@ sem_t PC_updated, PC_free, mux_memoryAdress_updated, mux_memoryAdress_free,
 pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle,
 		mux_memoryAdress_handle, mux_WriteRegIR_handle, mux_WriteDataIR_handle,
 		signExtend_handle, shiftLeft2_handle, mux_ALUA_handle, ALU_handle,
-		mux_ALUB_handle, mux_PC_handle, and_PC_handle, or_pc_handle;
+		mux_ALUB_handle, mux_PC_handle, and_PC_handle, or_pc_handle,
+		registers_handle;
 
 void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 	//TODO implement masks usage
@@ -91,7 +95,8 @@ void *memory(void *thread_id) {
 	fclose(bincode);
 	/*Execution init*/
 	PC = 0;
-	if (debugMode) cout << "PC has been initiated in " << PC << endl;
+	if (debugMode)
+		cout << "PC has been initiated in " << PC << endl;
 	sem_post(&PC_updated);
 	pthread_exit(0);
 }
@@ -101,7 +106,8 @@ void *mux_memoryAdress(void *thread_id) {
 		sem_wait(&PC_updated);
 		sem_wait(&mux_memoryAdress_free);
 
-		if (debugMode) cout << "1" << endl;
+		if (debugMode)
+			cout << PC << ": Mux to Memory Address has received PC" << endl;
 
 		sem_post(&mux_memoryAdress_updated);
 		sem_post(&PC_free);
@@ -115,7 +121,10 @@ void *clockedMemoryAccess(void *thread_id) {
 		sem_wait(&mux_memoryAdress_updated);
 		sem_wait(&clockedMemory_free);
 
-		if (debugMode) cout << "2" << endl;
+		if (debugMode)
+			cout << PC
+					<< ": Memory has received the Adress from Mux to Memory Address"
+					<< endl;
 		//mux0 createAndEnqueueJob(false);
 		//mux1 sw
 
@@ -130,20 +139,29 @@ void *instructionRegister(void *thread_id) {
 		sem_wait(&clockedMemory_updated);
 		sem_wait(&instructionRegister_free);
 
-		if (debugMode) cout << "3" << endl;
+		if (debugMode)
+			cout << PC << ": IR has received Memory Data" << endl;
 
 		sem_post(&instructionRegister_updated);
+		sem_wait(&MDR_free);
+
+		if (debugMode)
+			cout << PC << ": MDR has received Memory Data" << endl;
+
+		sem_post(&MDR_updated);
 		sem_post(&clockedMemory_free);
 	}
 	pthread_exit(0);
 }
 
 void *mux_WriteRegIR(void *thread_id) {
-	while(1){
+	while (1) {
 		sem_wait(&instructionRegister_updated);
 		sem_wait(&mux_WriteRegIR_free);
 
-		if (debugMode) cout << "4" << endl;
+		if (debugMode)
+			cout << PC << ": Mux Write to Register received the bits from IR"
+					<< endl;
 
 		sem_post(&mux_WriteRegIR_updated);
 		sem_post(&instructionRegister_free);
@@ -152,84 +170,117 @@ void *mux_WriteRegIR(void *thread_id) {
 }
 
 void *mux_WriteDataIR(void *thread_id) {
-	/*while(1){
-		sem_wait(&anterior_updated);
-		sem_wait(&proprio_free);
+	while (1) {
+		sem_wait(&MDR_updated);
+		sem_wait(&mux_WriteDataIR_free);
 
-		sem_post(&proprio_updated);
-		sem_post(&anterior_free);
-	}*/
+		if (debugMode)
+			cout << PC << ": Mux Write Data received data from MDR" << endl;
+
+		sem_post(&mux_WriteDataIR_updated);
+		sem_post(&MDR_free);
+	}
 	pthread_exit(0);
 }
 
-void *mux_signExtend(void *thread_id) {
-	/*while(1){
-		sem_wait(&anterior_updated);
-		sem_wait(&proprio_free);
-
-		sem_post(&proprio_updated);
-		sem_post(&anterior_free);
-	}*/
-	pthread_exit(0);
-}
-
-void *shiftLeft2(void *thread_id) {
-	/*while(1){
-		sem_wait(&anterior_updated);
-		sem_wait(&proprio_free);
-
-		sem_post(&proprio_updated);
-		sem_post(&anterior_free);
-	}*/
-	pthread_exit(0);
-}
-
-void *mux_ALUA(void *thread_id) {
-	while(1){
+void *registers(void *thread_id) {
+	while (1) {
 		sem_wait(&mux_WriteRegIR_updated);
-		sem_wait(&mux_ALUA_free);
+		sem_wait(&mux_WriteDataIR_updated);
+		sem_wait(&registers_free_0);
+		sem_wait(&registers_free_1);
 
-		if (debugMode) cout << "5" << endl;
+		if (debugMode)
+			cout << PC << ": Registers Bank being accessed" << endl;
 
-		sem_post(&mux_ALUA_updated);
+		sem_post(&registers_updated_0);
+		sem_post(&registers_updated_1);
+		sem_post(&mux_WriteDataIR_free);
 		sem_post(&mux_WriteRegIR_free);
 	}
 	pthread_exit(0);
 }
 
-void *ALU(void *thread_id) {
-	while(1){
-		sem_wait(&mux_ALUA_updated);
-		sem_wait(&ALU_free);
+void *mux_signExtend(void *thread_id) {
+	/*while(1){
+	 sem_wait(&anterior_updated);
+	 sem_wait(&proprio_free);
 
-		if (debugMode) cout << "6" << endl;
+	 sem_post(&proprio_updated);
+	 sem_post(&anterior_free);
+	 }*/
+	pthread_exit(0);
+}
 
-		sem_post(&ALU_updated);
-		sem_post(&mux_ALUA_free);
+void *shiftLeft2(void *thread_id) {
+	/*while(1){
+	 sem_wait(&anterior_updated);
+	 sem_wait(&proprio_free);
 
+	 sem_post(&proprio_updated);
+	 sem_post(&anterior_free);
+	 }*/
+	pthread_exit(0);
+}
+
+void *mux_ALUA(void *thread_id) {
+	while (1) {
+		sem_wait(&registers_updated_0);
+		sem_wait(&mux_ALUA_free);
+
+		if (debugMode){
+			fflush(0);
+			cout << PC << ": Buffer A from ALU has received the data from the Registers" << endl;
+		}
+
+		sem_post(&mux_ALUA_updated);
+		sem_post(&registers_free_0);
 	}
 	pthread_exit(0);
 }
 
 void *mux_ALUB(void *thread_id) {
-	/*while(1){
-		sem_wait(&anterior_updated);
-		sem_wait(&proprio_free);
+	while (1) {
+		sem_wait(&registers_updated_1);
+		sem_wait(&mux_ALUB_free);
 
-		sem_post(&proprio_updated);
-		sem_post(&anterior_free);
-	}*/
+		if (debugMode) {
+			fflush(0);
+			cout << PC << ": Buffer B from ALU has received the data from the Registers" << endl;
+		}
+
+		sem_post(&mux_ALUB_updated);
+		sem_post(&registers_free_1);
+	}
+	pthread_exit(0);
+}
+
+void *ALU(void *thread_id) {
+	while (1) {
+		sem_wait(&mux_ALUA_updated);
+		sem_wait(&mux_ALUB_updated);
+		sem_wait(&ALU_free);
+
+		if (debugMode)
+			cout << PC << ": ALU has received data from buffers" << endl;
+
+		sem_post(&ALU_updated);
+		sem_post(&mux_ALUA_free);
+		sem_post(&mux_ALUB_free);
+
+	}
 	pthread_exit(0);
 }
 
 void *mux_PC(void *thread_id) {
-	while(1){
+	while (1) {
 		sem_wait(&ALU_updated);
 		sem_wait(&PC_free);
 
 		simulateClockDelay();
 		PC++;
-		if (debugMode) cout << "Done! PC incremented to " << PC << endl;
+		if (debugMode)
+			cout << "Done! PC incremented to " << PC << endl;
 
 		sem_post(&PC_updated);
 		sem_post(&ALU_free);
@@ -239,23 +290,23 @@ void *mux_PC(void *thread_id) {
 
 void *and_PC(void *thread_id) {
 	/*while(1){
-		sem_wait(&anterior_updated);
-		sem_wait(&proprio_free);
+	 sem_wait(&anterior_updated);
+	 sem_wait(&proprio_free);
 
-		sem_post(&proprio_updated);
-		sem_post(&anterior_free);
-	}*/
+	 sem_post(&proprio_updated);
+	 sem_post(&anterior_free);
+	 }*/
 	pthread_exit(0);
 }
 
 void *or_PC(void *thread_id) {
 	/*while(1){
-		sem_wait(&anterior_updated);
-		sem_wait(&proprio_free);
+	 sem_wait(&anterior_updated);
+	 sem_wait(&proprio_free);
 
-		sem_post(&proprio_updated);
-		sem_post(&anterior_free);
-	}*/
+	 sem_post(&proprio_updated);
+	 sem_post(&anterior_free);
+	 }*/
 	pthread_exit(0);
 }
 
@@ -269,6 +320,9 @@ void semaphores_init() {
 	sem_init(&clockedMemory_updated, 0, 0);
 	sem_init(&clockedMemory_free, 0, 1);
 
+	sem_init(&MDR_updated, 0, 0);
+	sem_init(&MDR_free, 0, 1);
+
 	sem_init(&instructionRegister_updated, 0, 0);
 	sem_init(&instructionRegister_free, 0, 1);
 
@@ -277,6 +331,13 @@ void semaphores_init() {
 
 	sem_init(&mux_WriteDataIR_updated, 0, 0);
 	sem_init(&mux_WriteDataIR_free, 0, 1);
+
+	sem_init(&registers_free, 0, 1);
+
+	sem_init(&registers_updated_0, 0, 0);
+	sem_init(&registers_updated_1, 0, 0);
+	sem_init(&registers_free_0, 0, 1);
+	sem_init(&registers_free_1, 0, 1);
 
 	sem_init(&signExtend_updated, 0, 0);
 	sem_init(&signExtend_free, 0, 1);
@@ -307,16 +368,19 @@ void resourcesInit() {
 		cout << THREAD_INIT_FAIL("Memory");
 		exit(0);
 	}
-	if (pthread_create(&clockedMemory_handle, 0, clockedMemoryAccess, NULL) != 0) {
+	if (pthread_create(&clockedMemory_handle, 0, clockedMemoryAccess, NULL)
+			!= 0) {
 		//TODO incorporate clocked memory into memory
 		cout << THREAD_INIT_FAIL("Clocked Memory");
 		exit(0);
 	}
-	if (pthread_create(&instructionRegister_handle, 0, instructionRegister, NULL) != 0) {
+	if (pthread_create(&instructionRegister_handle, 0, instructionRegister,
+	NULL) != 0) {
 		cout << THREAD_INIT_FAIL("Instruction Register");
 		exit(0);
 	}
-	if (pthread_create(&mux_memoryAdress_handle, 0, mux_memoryAdress, NULL) != 0) {
+	if (pthread_create(&mux_memoryAdress_handle, 0, mux_memoryAdress, NULL)
+			!= 0) {
 		cout << THREAD_INIT_FAIL("MuxMemoryAddress");
 		exit(0);
 	}
@@ -324,7 +388,8 @@ void resourcesInit() {
 		cout << THREAD_INIT_FAIL("MuxWriteRegIR");
 		exit(0);
 	}
-	if (pthread_create(&mux_WriteDataIR_handle, 0, mux_WriteDataIR, NULL) != 0) {
+	if (pthread_create(&mux_WriteDataIR_handle, 0, mux_WriteDataIR, NULL)
+			!= 0) {
 		cout << THREAD_INIT_FAIL("MuxWriteDataIR");
 		exit(0);
 	}
@@ -334,6 +399,10 @@ void resourcesInit() {
 	}
 	if (pthread_create(&shiftLeft2_handle, 0, shiftLeft2, NULL) != 0) {
 		cout << THREAD_INIT_FAIL("Shiftleft2");
+		exit(0);
+	}
+	if (pthread_create(&registers_handle, 0, registers, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("Registers");
 		exit(0);
 	}
 	if (pthread_create(&mux_ALUA_handle, 0, mux_ALUA, NULL) != 0) {

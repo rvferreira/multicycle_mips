@@ -20,6 +20,7 @@ extern pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle
 
 extern dataBlock *memoryBank;
 extern int PC;
+extern int MDR;
 
 //struct jobInstruction {syncMutexes, UCState, ALUCState}
 //jobInstruction list pipeline[PIPELINE_SIZE]
