@@ -39,19 +39,96 @@ pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle,
 
 void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 	//TODO implement masks usage
-	job->controlSignals.PCWriteCond = 0;
-	job->controlSignals.PCWrite = 0;
-	job->controlSignals.IorD = 0;
-	job->controlSignals.MemRead = 0;
-	job->controlSignals.MemWrite = 0;
-	job->controlSignals.MemToReg = 0;
-	job->controlSignals.IRWrite = 0;
-	job->controlSignals.PCSource = 0;
-	job->controlSignals.ALUOp = 0;
-	job->controlSignals.ALUSrcB = 0;
-	job->controlSignals.ALUSrcA = 0;
-	job->controlSignals.RegWrite = 0;
-	job->controlSignals.RegDst = 0;
+	if (1/*ADD, SUB, AND, OR*/){
+		job->controlSignals.PCWriteCond = 0;
+		job->controlSignals.PCWrite = 1;
+		job->controlSignals.IorD = 0;
+		job->controlSignals.MemRead = 1;
+		job->controlSignals.MemWrite = 0;
+		job->controlSignals.MemToReg = 0;
+		job->controlSignals.IRWrite = 1;
+		job->controlSignals.PCSource = 0;
+		job->controlSignals.ALUOp0 = 0;
+		job->controlSignals.ALUSrcB = 0;
+		job->controlSignals.ALUSrcA = 0;
+		job->controlSignals.RegWrite = 0;
+		job->controlSignals.RegDst = 0;
+	}
+	else if (1/*SLT*/){
+		job->controlSignals.PCWriteCond = 0;
+		job->controlSignals.PCWrite = 0;
+		job->controlSignals.IorD = 0;
+		job->controlSignals.MemRead = 0;
+		job->controlSignals.MemWrite = 0;
+		job->controlSignals.MemToReg = 0;
+		job->controlSignals.IRWrite = 0;
+		job->controlSignals.PCSource = 0;
+		job->controlSignals.ALUOp = 0;
+		job->controlSignals.ALUSrcB = 0;
+		job->controlSignals.ALUSrcA = 0;
+		job->controlSignals.RegWrite = 0;
+		job->controlSignals.RegDst = 0;
+	}
+	else if (1/*LW*/){
+		job->controlSignals.PCWriteCond = 0;
+		job->controlSignals.PCWrite = 0;
+		job->controlSignals.IorD = 0;
+		job->controlSignals.MemRead = 0;
+		job->controlSignals.MemWrite = 0;
+		job->controlSignals.MemToReg = 0;
+		job->controlSignals.IRWrite = 0;
+		job->controlSignals.PCSource = 0;
+		job->controlSignals.ALUOp = 0;
+		job->controlSignals.ALUSrcB = 0;
+		job->controlSignals.ALUSrcA = 0;
+		job->controlSignals.RegWrite = 0;
+		job->controlSignals.RegDst = 0;
+		}
+	else if (1/*SW*/){
+		job->controlSignals.PCWriteCond = 0;
+		job->controlSignals.PCWrite = 0;
+		job->controlSignals.IorD = 0;
+		job->controlSignals.MemRead = 0;
+		job->controlSignals.MemWrite = 0;
+		job->controlSignals.MemToReg = 0;
+		job->controlSignals.IRWrite = 0;
+		job->controlSignals.PCSource = 0;
+		job->controlSignals.ALUOp = 0;
+		job->controlSignals.ALUSrcB = 0;
+		job->controlSignals.ALUSrcA = 0;
+		job->controlSignals.RegWrite = 0;
+		job->controlSignals.RegDst = 0;
+	}
+	else if (1/*BEQ*/){
+		job->controlSignals.PCWriteCond = 0;
+		job->controlSignals.PCWrite = 0;
+		job->controlSignals.IorD = 0;
+		job->controlSignals.MemRead = 0;
+		job->controlSignals.MemWrite = 0;
+		job->controlSignals.MemToReg = 0;
+		job->controlSignals.IRWrite = 0;
+		job->controlSignals.PCSource = 0;
+		job->controlSignals.ALUOp = 0;
+		job->controlSignals.ALUSrcB = 0;
+		job->controlSignals.ALUSrcA = 0;
+		job->controlSignals.RegWrite = 0;
+		job->controlSignals.RegDst = 0;
+	}
+	else if (1/*J*/){
+		job->controlSignals.PCWriteCond = 0;
+		job->controlSignals.PCWrite = 0;
+		job->controlSignals.IorD = 0;
+		job->controlSignals.MemRead = 0;
+		job->controlSignals.MemWrite = 0;
+		job->controlSignals.MemToReg = 0;
+		job->controlSignals.IRWrite = 0;
+		job->controlSignals.PCSource = 0;
+		job->controlSignals.ALUOp = 0;
+		job->controlSignals.ALUSrcB = 0;
+		job->controlSignals.ALUSrcA = 0;
+		job->controlSignals.RegWrite = 0;
+		job->controlSignals.RegDst = 0;
+	}
 }
 
 void createAndEnqueueJob(bool isNop) { //TODO isnop implementation
