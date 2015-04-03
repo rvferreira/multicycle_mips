@@ -39,92 +39,98 @@ pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle,
 
 void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 	//TODO implement masks usage
-	if (1/*ADD, SUB, AND, OR*/){
+	//When it is "Don't care", the signal will be set to 0 for simplicity
+	//R-type instruction: add, sub, and, or, slt
+	if (instructionToFetch == 0x00000000){
+		job->controlSignals.PCWriteCond = 0;
+		job->controlSignals.PCWrite = 0;
+		job->controlSignals.IorD = 0;
+		job->controlSignals.MemRead = 0;
+		job->controlSignals.MemWrite = 0;
+		job->controlSignals.MemToReg = 0;
+		job->controlSignals.IRWrite = 0;
+		job->controlSignals.PCSource0 = 0;
+		job->controlSignals.PCSource1 = 0;
+		job->controlSignals.ALUOp0 = 1;
+		job->controlSignals.ALUOp1 = 0;
+		job->controlSignals.ALUSrcB0 = 0;
+		job->controlSignals.ALUSrcB1 = 0;
+		job->controlSignals.ALUSrcA = 1;
+		job->controlSignals.RegWrite = 1;
+		job->controlSignals.RegDst = 1;
+	}
+	//LW instruction
+	else if (instructionToFetch == 0x8c000000){
+		job->controlSignals.PCWriteCond = 0;
+		job->controlSignals.PCWrite = 0;
+		job->controlSignals.IorD = 1;
+		job->controlSignals.MemRead = 1;
+		job->controlSignals.MemWrite = 0;
+		job->controlSignals.MemToReg = 1;
+		job->controlSignals.IRWrite = 0;
+		job->controlSignals.PCSource0 = 0;
+		job->controlSignals.PCSource1 = 0;
+		job->controlSignals.ALUOp0 = 0;
+		job->controlSignals.ALUOp1 = 0;
+		job->controlSignals.ALUSrcB0 = 1;
+		job->controlSignals.ALUSrcB1 = 0;
+		job->controlSignals.ALUSrcA = 0;
+		job->controlSignals.RegWrite = 1;
+		job->controlSignals.RegDst = 0;
+		}
+	//SW instruction
+	else if (instructionToFetch == 0xac000000){
+		job->controlSignals.PCWriteCond = 0;
+		job->controlSignals.PCWrite = 0;
+		job->controlSignals.IorD = 1;
+		job->controlSignals.MemRead = 0;
+		job->controlSignals.MemWrite = 1;
+		job->controlSignals.MemToReg = 0;
+		job->controlSignals.IRWrite = 0;
+		job->controlSignals.PCSource0 = 0;
+		job->controlSignals.PCSource1 = 0;
+		job->controlSignals.ALUOp0 = 0;
+		job->controlSignals.ALUOp1 = 0;
+		job->controlSignals.ALUSrcB0 = 1;
+		job->controlSignals.ALUSrcB1 = 0;
+		job->controlSignals.ALUSrcA = 0;
+		job->controlSignals.RegWrite = 0;
+		job->controlSignals.RegDst = 0;
+	}
+	//BEQ (branch on equal) instruction
+	else if (instructionToFetch == 0x10000000){
+		job->controlSignals.PCWriteCond = 1;
+		job->controlSignals.PCWrite = 0;
+		job->controlSignals.IorD = 0;
+		job->controlSignals.MemRead = 0;
+		job->controlSignals.MemWrite = 0;
+		job->controlSignals.MemToReg = 0;
+		job->controlSignals.IRWrite = 0;
+		job->controlSignals.PCSource0 = 0;
+		job->controlSignals.PCSource1 = 1;
+		job->controlSignals.ALUOp0 = 0;
+		job->controlSignals.ALUOp1 = 1;
+		job->controlSignals.ALUSrcB0 = 0;
+		job->controlSignals.ALUSrcB1 = 0;
+		job->controlSignals.ALUSrcA = 1;
+		job->controlSignals.RegWrite = 0;
+		job->controlSignals.RegDst = 0;
+	}
+	//Jump instruction
+	else if (instructionToFetch == 0x08000000){
 		job->controlSignals.PCWriteCond = 0;
 		job->controlSignals.PCWrite = 1;
 		job->controlSignals.IorD = 0;
-		job->controlSignals.MemRead = 1;
+		job->controlSignals.MemRead = 0;
 		job->controlSignals.MemWrite = 0;
 		job->controlSignals.MemToReg = 0;
-		job->controlSignals.IRWrite = 1;
-		job->controlSignals.PCSource = 0;
+		job->controlSignals.IRWrite = 0;
+		job->controlSignals.PCSource0 = 1;
+		job->controlSignals.PCSource1 = 0;
 		job->controlSignals.ALUOp0 = 0;
-		job->controlSignals.ALUSrcB = 0;
-		job->controlSignals.ALUSrcA = 0;
-		job->controlSignals.RegWrite = 0;
-		job->controlSignals.RegDst = 0;
-	}
-	else if (1/*SLT*/){
-		job->controlSignals.PCWriteCond = 0;
-		job->controlSignals.PCWrite = 0;
-		job->controlSignals.IorD = 0;
-		job->controlSignals.MemRead = 0;
-		job->controlSignals.MemWrite = 0;
-		job->controlSignals.MemToReg = 0;
-		job->controlSignals.IRWrite = 0;
-		job->controlSignals.PCSource = 0;
-		job->controlSignals.ALUOp = 0;
-		job->controlSignals.ALUSrcB = 0;
-		job->controlSignals.ALUSrcA = 0;
-		job->controlSignals.RegWrite = 0;
-		job->controlSignals.RegDst = 0;
-	}
-	else if (1/*LW*/){
-		job->controlSignals.PCWriteCond = 0;
-		job->controlSignals.PCWrite = 0;
-		job->controlSignals.IorD = 0;
-		job->controlSignals.MemRead = 0;
-		job->controlSignals.MemWrite = 0;
-		job->controlSignals.MemToReg = 0;
-		job->controlSignals.IRWrite = 0;
-		job->controlSignals.PCSource = 0;
-		job->controlSignals.ALUOp = 0;
-		job->controlSignals.ALUSrcB = 0;
-		job->controlSignals.ALUSrcA = 0;
-		job->controlSignals.RegWrite = 0;
-		job->controlSignals.RegDst = 0;
-		}
-	else if (1/*SW*/){
-		job->controlSignals.PCWriteCond = 0;
-		job->controlSignals.PCWrite = 0;
-		job->controlSignals.IorD = 0;
-		job->controlSignals.MemRead = 0;
-		job->controlSignals.MemWrite = 0;
-		job->controlSignals.MemToReg = 0;
-		job->controlSignals.IRWrite = 0;
-		job->controlSignals.PCSource = 0;
-		job->controlSignals.ALUOp = 0;
-		job->controlSignals.ALUSrcB = 0;
-		job->controlSignals.ALUSrcA = 0;
-		job->controlSignals.RegWrite = 0;
-		job->controlSignals.RegDst = 0;
-	}
-	else if (1/*BEQ*/){
-		job->controlSignals.PCWriteCond = 0;
-		job->controlSignals.PCWrite = 0;
-		job->controlSignals.IorD = 0;
-		job->controlSignals.MemRead = 0;
-		job->controlSignals.MemWrite = 0;
-		job->controlSignals.MemToReg = 0;
-		job->controlSignals.IRWrite = 0;
-		job->controlSignals.PCSource = 0;
-		job->controlSignals.ALUOp = 0;
-		job->controlSignals.ALUSrcB = 0;
-		job->controlSignals.ALUSrcA = 0;
-		job->controlSignals.RegWrite = 0;
-		job->controlSignals.RegDst = 0;
-	}
-	else if (1/*J*/){
-		job->controlSignals.PCWriteCond = 0;
-		job->controlSignals.PCWrite = 0;
-		job->controlSignals.IorD = 0;
-		job->controlSignals.MemRead = 0;
-		job->controlSignals.MemWrite = 0;
-		job->controlSignals.MemToReg = 0;
-		job->controlSignals.IRWrite = 0;
-		job->controlSignals.PCSource = 0;
-		job->controlSignals.ALUOp = 0;
-		job->controlSignals.ALUSrcB = 0;
+		job->controlSignals.ALUOp1 = 0;
+		job->controlSignals.ALUSrcB0 = 0;
+		job->controlSignals.ALUSrcB1 = 0;
 		job->controlSignals.ALUSrcA = 0;
 		job->controlSignals.RegWrite = 0;
 		job->controlSignals.RegDst = 0;
