@@ -4,6 +4,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CC_SRCS += \
+../src/control_signals.cc \
 ../src/cpu_resources.cc \
 ../src/utils.cc 
 
@@ -11,10 +12,12 @@ CPP_SRCS += \
 ../src/main.cpp 
 
 CC_DEPS += \
+./src/control_signals.d \
 ./src/cpu_resources.d \
 ./src/utils.d 
 
 OBJS += \
+./src/control_signals.o \
 ./src/cpu_resources.o \
 ./src/main.o \
 ./src/utils.o 

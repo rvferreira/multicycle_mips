@@ -18,11 +18,11 @@ using namespace std;
 #define PROGRAM_NAME "UFMips"
 
 #define USAGE "\
-Usage: " PROGRAM_NAME " OPTIONS FILE\n\
+Usage: " PROGRAM_NAME " [options] FILE\n\
 Try \"" PROGRAM_NAME " --help\" for more informations.\n"
 
 #define HELP "\
-Usage: " PROGRAM_NAME " OPTIONS FILE\n\
+Usage: " PROGRAM_NAME " [options] FILE\n\
 Example: ./" PROGRAM_NAME " --nodclock teste.mips\n\
 Runs a Multicycle MIPS CPU over a set of instructions specified\n\
 in the OPTION_FILE.\n\
@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
 	pthread_join(mux_WriteRegIR_handle, 0);
 	pthread_join(mux_WriteDataIR_handle, 0);
 	pthread_join(signExtend_handle, 0);
-	pthread_join(shiftLeft2_handle, 0);
+	pthread_join(shiftLeft2_muxPC_handle, 0);
 	pthread_join(mux_ALUA_handle, 0);
 	pthread_join(ALU_handle, 0);
 	pthread_join(mux_ALUB_handle, 0);
