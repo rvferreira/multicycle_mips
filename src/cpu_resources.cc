@@ -30,10 +30,11 @@ sem_t PC_updated, PC_free, mux_memoryAdress_updated, mux_memoryAdress_free,
 		instructionRegister_updated, instructionRegister_free,
 		mux_WriteRegIR_updated, mux_WriteRegIR_free, mux_WriteDataIR_updated,
 		mux_WriteDataIR_free, registers_updated_0, registers_updated_1,
-		registers_free, registers_free_0, registers_free_1, signExtend_updated,
-		signExtend_free, shiftLeft2_updated, shiftLeft2_free, mux_ALUA_updated,
-		mux_ALUA_free, ALU_updated, ALU_free, mux_ALUB_updated, mux_ALUB_free,
-		mux_PC_updated, mux_PC_free;
+		registers_updated_2, registers_free, registers_free_0, registers_free_1,
+		registers_free_2, signExtend_updated, signExtend_free,
+		shiftLeft2_updated, shiftLeft2_free, mux_ALUA_updated, mux_ALUA_free,
+		ALU_updated, ALU_free, mux_ALUB_updated, mux_ALUB_free, mux_PC_updated,
+		mux_PC_free;
 
 pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle,
 		mux_memoryAdress_handle, mux_WriteRegIR_handle, mux_WriteDataIR_handle,
@@ -189,12 +190,14 @@ void *registers(void *thread_id) {
 		sem_wait(&mux_WriteDataIR_updated);
 		sem_wait(&registers_free_0);
 		sem_wait(&registers_free_1);
+		sem_wait(&registers_free_2);
 
 		if (debugMode)
 			cout << PC << ": Registers Bank being accessed" << endl;
 
 		sem_post(&registers_updated_0);
 		sem_post(&registers_updated_1);
+		sem_post(&registers_updated_2);
 		sem_post(&mux_WriteDataIR_free);
 		sem_post(&mux_WriteRegIR_free);
 	}
@@ -202,13 +205,13 @@ void *registers(void *thread_id) {
 }
 
 void *mux_signExtend(void *thread_id) {
-	/*while(1){
-	 sem_wait(&anterior_updated);
-	 sem_wait(&proprio_free);
+	while (1) {
+		sem_wait(&registers_updated_2);
+		sem_wait (&signExtend_free);
 
-	 sem_post(&proprio_updated);
-	 sem_post(&anterior_free);
-	 }*/
+		sem_post (&signExtend_updated);
+		sem_post(&registers_free_2);
+	}
 	pthread_exit(0);
 }
 
@@ -228,9 +231,11 @@ void *mux_ALUA(void *thread_id) {
 		sem_wait(&registers_updated_0);
 		sem_wait(&mux_ALUA_free);
 
-		if (debugMode){
+		if (debugMode) {
 			fflush(0);
-			cout << PC << ": Buffer A from ALU has received the data from the Registers" << endl;
+			cout << PC
+					<< ": Buffer A from ALU has received the data from the Registers"
+					<< endl;
 		}
 
 		sem_post(&mux_ALUA_updated);
@@ -246,7 +251,9 @@ void *mux_ALUB(void *thread_id) {
 
 		if (debugMode) {
 			fflush(0);
-			cout << PC << ": Buffer B from ALU has received the data from the Registers" << endl;
+			cout << PC
+					<< ": Buffer B from ALU has received the data from the Registers"
+					<< endl;
 		}
 
 		sem_post(&mux_ALUB_updated);
@@ -336,6 +343,7 @@ void semaphores_init() {
 
 	sem_init(&registers_updated_0, 0, 0);
 	sem_init(&registers_updated_1, 0, 0);
+	sem_init(&registers_updated_2, 0, 0);
 	sem_init(&registers_free_0, 0, 1);
 	sem_init(&registers_free_1, 0, 1);
 
