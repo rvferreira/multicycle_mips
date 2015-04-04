@@ -10,8 +10,7 @@
 void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 	//When it is "Don't care", the signal will be set to 0 for simplicity
 	//R-type instruction: add, sub, and, or, slt.
-	if (instructionToFetch.byte[0] == 0 && instructionToFetch.byte[1] == 0 &&
-			instructionToFetch.byte[2] == 0 && instructionToFetch.byte[3] == 0){
+	if (instructionToFetch.byte[0] == 0x00){
 		job->controlSignals.PCWriteCond = 0;
 		job->controlSignals.PCWrite = 0;
 		job->controlSignals.IorD = 0;
@@ -28,10 +27,39 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.ALUSrcA = 1;
 		job->controlSignals.RegWrite = 1;
 		job->controlSignals.RegDst = 1;
+		//If instruction is an ADD, ALUCtrl = 001
+		if (instructionToFetch.byte[3] == 0x20){
+			job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
+			job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
+			job->controlSignals.ALUCtrl.ALUCtrl2 = 1;
+		}
+		//If instruction is a SUB, ALUCtrl = 010
+		else if (instructionToFetch.byte[3] == 0x22){
+			job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
+			job->controlSignals.ALUCtrl.ALUCtrl1 = 1;
+			job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
+		}
+		//If instruction is an AND, ALUCtrl = 011
+		else if (instructionToFetch.byte[3] == 0x24){
+			job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
+			job->controlSignals.ALUCtrl.ALUCtrl1 = 1;
+			job->controlSignals.ALUCtrl.ALUCtrl2 = 1;
+		}
+		//If instruction is an OR, ALUCtrl = 100
+		else if (instructionToFetch.byte[3] == 0x1f){
+			job->controlSignals.ALUCtrl.ALUCtrl0 = 1;
+			job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
+			job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
+		}
+		//If instruction is a SLT, ALUCtrl = 101
+		else if (instructionToFetch.byte[3] == 0x2a){
+			job->controlSignals.ALUCtrl.ALUCtrl0 = 1;
+			job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
+			job->controlSignals.ALUCtrl.ALUCtrl2 = 1;
+		}
 	}
 	//LW instruction.
-	else if (instructionToFetch.byte[0] == 0 && instructionToFetch.byte[1] == 0 &&
-				instructionToFetch.byte[2] == 0 && instructionToFetch.byte[3] == 0){
+	else if (instructionToFetch.byte[0] == 0x8c){
 		job->controlSignals.PCWriteCond = 0;
 		job->controlSignals.PCWrite = 0;
 		job->controlSignals.IorD = 1;
@@ -48,10 +76,12 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.ALUSrcA = 0;
 		job->controlSignals.RegWrite = 1;
 		job->controlSignals.RegDst = 0;
+		job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
+		job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
+		job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
 		}
 	//SW instruction
-	else if (instructionToFetch.byte[0] == 0 && instructionToFetch.byte[1] == 0 &&
-				instructionToFetch.byte[2] == 0 && instructionToFetch.byte[3] == 0){
+	else if (instructionToFetch.byte[0] == 0xac){
 		job->controlSignals.PCWriteCond = 0;
 		job->controlSignals.PCWrite = 0;
 		job->controlSignals.IorD = 1;
@@ -68,10 +98,12 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.ALUSrcA = 0;
 		job->controlSignals.RegWrite = 0;
 		job->controlSignals.RegDst = 0;
+		job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
+		job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
+		job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
 	}
 	//BEQ (branch on equal) instruction
-	else if (instructionToFetch.byte[0] == 0 && instructionToFetch.byte[1] == 0 &&
-				instructionToFetch.byte[2] == 0 && instructionToFetch.byte[3] == 0){
+	else if (instructionToFetch.byte[0] == 0x10){
 		job->controlSignals.PCWriteCond = 1;
 		job->controlSignals.PCWrite = 0;
 		job->controlSignals.IorD = 0;
@@ -88,10 +120,12 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.ALUSrcA = 1;
 		job->controlSignals.RegWrite = 0;
 		job->controlSignals.RegDst = 0;
+		job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
+		job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
+		job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
 	}
 	//Jump instruction
-	else if (instructionToFetch.byte[0] == 0 && instructionToFetch.byte[1] == 0 &&
-				instructionToFetch.byte[2] == 0 && instructionToFetch.byte[3] == 0){
+	else if (instructionToFetch.byte[0] == 0x08){
 		job->controlSignals.PCWriteCond = 0;
 		job->controlSignals.PCWrite = 1;
 		job->controlSignals.IorD = 0;
@@ -108,5 +142,8 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.ALUSrcA = 0;
 		job->controlSignals.RegWrite = 0;
 		job->controlSignals.RegDst = 0;
+		job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
+		job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
+		job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
 	}
 }

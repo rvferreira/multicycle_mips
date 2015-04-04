@@ -25,6 +25,12 @@
 #define CLOCK_DELAY_TIME 200000
 #define CYCLES_COUNT 5
 
+struct ALUControl{
+	bool ALUCtrl0,
+		ALUCtrl1,
+		ALUCtrl2;
+};
+
 struct FetchedInstruction{
 	bool PCWriteCond,
 		PCWrite,
@@ -42,6 +48,7 @@ struct FetchedInstruction{
 		ALUSrcA,
 		RegWrite,
 		RegDst;
+		ALUControl ALUCtrl;
 };
 
 struct SyncedInstruction{
