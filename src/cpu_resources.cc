@@ -20,30 +20,32 @@ struct UC {
 int PC;
 int MDR;
 
-sem_t instructions_updated, instructions_free;
-
-// sem_updated means that its information is ready to be read
-// sem_free means that it's available for writing
-// syncs mutexes
+/* component level sync mutexes
+ *
+ * sem_component_updated means that its information is ready to be read from the next component
+ * sem_component_free means that it's available for writing
+ *
+ * */
 sem_t PC_updated, PC_free, mux_memoryAdress_updated, mux_memoryAdress_free,
 		clockedMemory_updated, clockedMemory_free, MDR_updated, MDR_free,
 		instructionRegister_updated, instructionRegister_free,
 		mux_WriteRegIR_updated, mux_WriteRegIR_free, mux_WriteDataIR_updated,
 		mux_WriteDataIR_free, registers_updated_0, registers_updated_1,
-		registers_updated_2, registers_free, registers_free_0, registers_free_1,
-		registers_free_2, signExtend_updated, signExtend_free,
-		shiftLeft2_updated, shiftLeft2_free, mux_ALUA_updated, mux_ALUA_free,
-		ALU_updated, ALU_free, mux_ALUB_updated, mux_ALUB_free, mux_PC_updated,
+		IR_0_updated, registers_free_0, registers_free_1,
+		IR_0_free, signExtend_updated, signExtend_free,
+		shiftLeft2_muxPC_updated, shiftLeft2_muxPC_free, mux_ALUA_updated, mux_ALUA_free,
+		ALU_updated, ALU_free, ALUOut_updated, ALUOut_free, mux_ALUB_updated, mux_ALUB_free, mux_PC_updated,
 		mux_PC_free;
+
+sem_t ALUBuffers_syncPrint;
 
 pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle,
 		mux_memoryAdress_handle, mux_WriteRegIR_handle, mux_WriteDataIR_handle,
-		signExtend_handle, shiftLeft2_handle, mux_ALUA_handle, ALU_handle,
+		signExtend_handle, shiftLeft2_muxPC_handle, mux_ALUA_handle, ALU_handle,
 		mux_ALUB_handle, mux_PC_handle, and_PC_handle, or_pc_handle,
 		registers_handle;
 
 void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
-	//TODO implement masks usage
 	//When it is "Don't care", the signal will be set to 0 for simplicity
 	//R-type instruction: add, sub, and, or, slt.
 	if (instructionToFetch.byte[0] == 0 && instructionToFetch.byte[1] == 0 &&
@@ -225,8 +227,10 @@ void *clockedMemoryAccess(void *thread_id) {
 
 void *instructionRegister(void *thread_id) {
 	while (1) {
+
 		sem_wait(&clockedMemory_updated);
 		sem_wait(&instructionRegister_free);
+		sem_wait(&IR_0_free);
 
 		if (debugMode)
 			cout << PC << ": IR has received Memory Data" << endl;
@@ -237,6 +241,7 @@ void *instructionRegister(void *thread_id) {
 		if (debugMode)
 			cout << PC << ": MDR has received Memory Data" << endl;
 
+		sem_post(&IR_0_updated);
 		sem_post(&MDR_updated);
 		sem_post(&clockedMemory_free);
 	}
@@ -278,14 +283,12 @@ void *registers(void *thread_id) {
 		sem_wait(&mux_WriteDataIR_updated);
 		sem_wait(&registers_free_0);
 		sem_wait(&registers_free_1);
-		sem_wait(&registers_free_2);
 
 		if (debugMode)
 			cout << PC << ": Registers Bank being accessed" << endl;
 
 		sem_post(&registers_updated_0);
 		sem_post(&registers_updated_1);
-		sem_post(&registers_updated_2);
 		sem_post(&mux_WriteDataIR_free);
 		sem_post(&mux_WriteRegIR_free);
 	}
@@ -294,16 +297,16 @@ void *registers(void *thread_id) {
 
 void *mux_signExtend(void *thread_id) {
 	while (1) {
-		sem_wait(&registers_updated_2);
+		sem_wait(&IR_0_updated);
 		sem_wait (&signExtend_free);
 
 		sem_post (&signExtend_updated);
-		sem_post(&registers_free_2);
+		sem_post(&IR_0_free);
 	}
 	pthread_exit(0);
 }
 
-void *shiftLeft2(void *thread_id) {
+void *shiftLeft2_muxPC(void *thread_id) {
 	/*while(1){
 	 sem_wait(&anterior_updated);
 	 sem_wait(&proprio_free);
@@ -320,10 +323,11 @@ void *mux_ALUA(void *thread_id) {
 		sem_wait(&mux_ALUA_free);
 
 		if (debugMode) {
-			fflush(0);
+			sem_wait(&ALUBuffers_syncPrint);
 			cout << PC
 					<< ": Buffer A from ALU has received the data from the Registers"
 					<< endl;
+			sem_post(&ALUBuffers_syncPrint);
 		}
 
 		sem_post(&mux_ALUA_updated);
@@ -336,15 +340,18 @@ void *mux_ALUB(void *thread_id) {
 	while (1) {
 		sem_wait(&registers_updated_1);
 		sem_wait(&mux_ALUB_free);
+		sem_wait(&signExtend_updated);
 
 		if (debugMode) {
-			fflush(0);
+			sem_wait(&ALUBuffers_syncPrint);
 			cout << PC
 					<< ": Buffer B from ALU has received the data from the Registers"
 					<< endl;
+			sem_post(&ALUBuffers_syncPrint);
 		}
 
 		sem_post(&mux_ALUB_updated);
+		sem_post(&signExtend_free);
 		sem_post(&registers_free_1);
 	}
 	pthread_exit(0);
@@ -360,6 +367,14 @@ void *ALU(void *thread_id) {
 			cout << PC << ": ALU has received data from buffers" << endl;
 
 		sem_post(&ALU_updated);
+
+		sem_wait(&ALUOut_free);
+
+		if (debugMode)
+					cout << PC << ": ALUOut has been loaded" << endl;
+
+		sem_post(&ALUOut_updated);
+
 		sem_post(&mux_ALUA_free);
 		sem_post(&mux_ALUB_free);
 
@@ -370,15 +385,17 @@ void *ALU(void *thread_id) {
 void *mux_PC(void *thread_id) {
 	while (1) {
 		sem_wait(&ALU_updated);
+		sem_wait(&ALUOut_updated);
 		sem_wait(&PC_free);
 
 		simulateClockDelay();
 		PC++;
 		if (debugMode)
-			cout << "Done! PC incremented to " << PC << endl;
+			cout << "Done! PC incremented to " << PC << endl << endl;
 
 		sem_post(&PC_updated);
 		sem_post(&ALU_free);
+		sem_post(&ALUOut_free);
 	}
 	pthread_exit(0);
 }
@@ -427,38 +444,44 @@ void semaphores_init() {
 	sem_init(&mux_WriteDataIR_updated, 0, 0);
 	sem_init(&mux_WriteDataIR_free, 0, 1);
 
-	sem_init(&registers_free, 0, 1);
+	sem_init(&IR_0_free, 0, 1);
+	sem_init(&IR_0_updated, 0, 0);
 
 	sem_init(&registers_updated_0, 0, 0);
 	sem_init(&registers_updated_1, 0, 0);
-	sem_init(&registers_updated_2, 0, 0);
+
 	sem_init(&registers_free_0, 0, 1);
 	sem_init(&registers_free_1, 0, 1);
 
 	sem_init(&signExtend_updated, 0, 0);
 	sem_init(&signExtend_free, 0, 1);
 
-	sem_init(&shiftLeft2_updated, 0, 0);
-	sem_init(&shiftLeft2_free, 0, 1);
+	sem_init(&shiftLeft2_muxPC_updated, 0, 0);
+	sem_init(&shiftLeft2_muxPC_free, 0, 1);
 
 	sem_init(&mux_ALUA_updated, 0, 0);
 	sem_init(&mux_ALUA_free, 0, 1);
 
-	sem_init(&ALU_updated, 0, 0);
-	sem_init(&ALU_free, 0, 1);
-
 	sem_init(&mux_ALUB_updated, 0, 0);
 	sem_init(&mux_ALUB_free, 0, 1);
 
+	sem_init(&ALU_updated, 0, 0);
+	sem_init(&ALU_free, 0, 1);
+
+	sem_init(&ALUOut_updated, 0, 0);
+	sem_init(&ALUOut_free, 0, 1);
+
 	sem_init(&mux_PC_updated, 0, 0);
 	sem_init(&mux_PC_free, 0, 1);
+
+	sem_init(&ALUBuffers_syncPrint, 0, 1);
 }
 
 void resourcesInit() {
 	semaphores_init();
 
-	sem_init(&instructions_updated, 0, 0);
-	sem_init(&instructions_free, 0, CYCLES_COUNT);
+//	sem_init(&instructions_updated, 0, 0);
+//	sem_init(&instructions_free, 0, CYCLES_COUNT);
 
 	if (pthread_create(&memory_handle, 0, memory, NULL) != 0) {
 		cout << THREAD_INIT_FAIL("Memory");
@@ -493,8 +516,8 @@ void resourcesInit() {
 		cout << THREAD_INIT_FAIL("MuxSign Extend");
 		exit(0);
 	}
-	if (pthread_create(&shiftLeft2_handle, 0, shiftLeft2, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("Shiftleft2");
+	if (pthread_create(&shiftLeft2_muxPC_handle, 0, shiftLeft2_muxPC, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("Shiftleft2 at Mux PC");
 		exit(0);
 	}
 	if (pthread_create(&registers_handle, 0, registers, NULL) != 0) {
