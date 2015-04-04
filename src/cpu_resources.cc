@@ -31,12 +31,12 @@ sem_t PC_updated, PC_free, mux_memoryAdress_updated, mux_memoryAdress_free,
 		instructionRegister_updated, instructionRegister_free,
 		mux_WriteRegIR_updated, mux_WriteRegIR_free, mux_WriteDataIR_updated,
 		mux_WriteDataIR_free, registers_updated_0, registers_updated_1,
-		IR_0_updated, registers_free_0, registers_free_1, IR_0_free,
-		signExtend_updated, signExtend_free, shiftLeft2_muxPC_updated,
-		shiftLeft2_muxPC_free, shiftLeft2_muxALUB_updated,
-		shiftLeft2_muxALUB_free, mux_ALUA_updated, mux_ALUA_free, ALU_updated,
-		ALU_free, ALUOut_updated, ALUOut_free, mux_ALUB_updated, mux_ALUB_free,
-		mux_PC_updated, mux_PC_free;
+		registers_free_0, registers_free_1, IR_0_free, IR_0_updated, IR_1_free,
+		IR_1_updated, signExtend_updated, signExtend_free,
+		shiftLeft2_muxPC_updated, shiftLeft2_muxPC_free,
+		shiftLeft2_muxALUB_updated, shiftLeft2_muxALUB_free, mux_ALUA_updated,
+		mux_ALUA_free, ALU_updated, ALU_free, ALUOut_updated, ALUOut_free,
+		mux_ALUB_updated, mux_ALUB_free, mux_PC_updated, mux_PC_free;
 
 sem_t printSync;
 
@@ -128,6 +128,7 @@ void *instructionRegister(void *thread_id) {
 		sem_wait(&clockedMemory_updated);
 		sem_wait(&instructionRegister_free);
 		sem_wait(&IR_0_free);
+		sem_wait(&IR_1_free);
 
 		if (debugMode)
 			cout << PC << ": IR has received Memory Data" << endl;
@@ -139,6 +140,7 @@ void *instructionRegister(void *thread_id) {
 			cout << PC << ": MDR has received Memory Data" << endl;
 
 		sem_post(&IR_0_updated);
+		sem_post(&IR_1_updated);
 		sem_post(&MDR_updated);
 		sem_post(&clockedMemory_free);
 	}
@@ -187,7 +189,7 @@ void *registers(void *thread_id) {
 		sem_wait(&registers_free_0);
 		sem_wait(&registers_free_1);
 
-		if (debugMode){
+		if (debugMode) {
 			sem_wait(&printSync);
 			cout << PC << ": Registers Bank being accessed" << endl;
 			sem_post(&printSync);
@@ -208,9 +210,7 @@ void *mux_signExtend(void *thread_id) {
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			cout << PC
-					<< ": Sign Extend has operated"
-					<< endl;
+			cout << PC << ": Sign Extend has operated" << endl;
 			sem_post(&printSync);
 		}
 
@@ -221,40 +221,36 @@ void *mux_signExtend(void *thread_id) {
 }
 
 void *shiftLeft2_muxPC(void *thread_id) {
-	/*while(1){
-	 sem_wait(&anterior_updated);
-	 sem_wait(&proprio_free);
+	while (1) {
+		sem_wait(&IR_1_updated);
+		sem_wait(&shiftLeft2_muxPC_free);
 
-	if (debugMode) {
-		sem_wait(&printSync);
-		cout << PC
-				<< ": Shift Left 2 at mux PC has operated"
-				<< endl;
-		sem_post(&printSync);
+		if (debugMode) {
+			sem_wait(&printSync);
+			cout << PC << ": Shift Left 2 at mux PC has operated" << endl;
+			sem_post(&printSync);
+		}
+
+		sem_post(&shiftLeft2_muxPC_updated);
+		sem_post(&IR_1_free);
 	}
-
-	 sem_post(&proprio_updated);
-	 sem_post(&anterior_free);
-	 }*/
 	pthread_exit(0);
 }
 
 void *shiftLeft2_muxALUB(void *thread_id) {
-	while(1){
+	while (1) {
 		sem_wait(&signExtend_updated);
 		sem_wait(&shiftLeft2_muxALUB_free);
 
 		if (debugMode) {
-					sem_wait(&printSync);
-					cout << PC
-							<< ": Shift Left 2 at mux ALUB has operated"
-							<< endl;
-					sem_post(&printSync);
-				}
+			sem_wait(&printSync);
+			cout << PC << ": Shift Left 2 at mux ALUB has operated" << endl;
+			sem_post(&printSync);
+		}
 
 		sem_post(&shiftLeft2_muxALUB_updated);
 		sem_post(&signExtend_free);
-	 }
+	}
 	pthread_exit(0);
 }
 
@@ -327,6 +323,7 @@ void *mux_PC(void *thread_id) {
 	while (1) {
 		sem_wait(&ALU_updated);
 		sem_wait(&ALUOut_updated);
+		sem_wait(&shiftLeft2_muxPC_updated);
 		sem_wait(&PC_free);
 
 		PC++;
@@ -335,6 +332,7 @@ void *mux_PC(void *thread_id) {
 		simulateClockDelay();
 
 		sem_post(&PC_updated);
+		sem_post(&shiftLeft2_muxPC_free);
 		sem_post(&ALU_free);
 		sem_post(&ALUOut_free);
 	}
@@ -387,6 +385,9 @@ void semaphores_init() {
 
 	sem_init(&IR_0_free, 0, 1);
 	sem_init(&IR_0_updated, 0, 0);
+
+	sem_init(&IR_1_free, 0, 1);
+	sem_init(&IR_1_updated, 0, 0);
 
 	sem_init(&registers_updated_0, 0, 0);
 	sem_init(&registers_updated_1, 0, 0);
