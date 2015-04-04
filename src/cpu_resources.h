@@ -11,6 +11,7 @@
 	Failure in the " THREAD_NAME " thread Initialization \n"
 
 #include "utils.h"
+#include "control_signals.h"
 #include <list>
 
 extern pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle,
