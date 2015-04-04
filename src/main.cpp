@@ -76,6 +76,7 @@ int main(int argc, char** argv) {
 	pthread_join(mux_WriteDataIR_handle, 0);
 	pthread_join(signExtend_handle, 0);
 	pthread_join(shiftLeft2_muxPC_handle, 0);
+	pthread_join(shiftLeft2_muxALUB_handle, 0);
 	pthread_join(mux_ALUA_handle, 0);
 	pthread_join(ALU_handle, 0);
 	pthread_join(mux_ALUB_handle, 0);

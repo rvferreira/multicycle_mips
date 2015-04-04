@@ -8,9 +8,12 @@
 #include "control_signals.h"
 
 void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
+	char buffer = instructionToFetch.byte[0];
+	buffer = (instructionToFetch.byte[0] & (char)0xfc);
+
 	//When it is "Don't care", the signal will be set to 0 for simplicity
 	//R-type instruction: add, sub, and, or, slt.
-	if (instructionToFetch.byte[0] == 0x00){
+	if (buffer == 0x00){
 		job->controlSignals.PCWriteCond = 0;
 		job->controlSignals.PCWrite = 0;
 		job->controlSignals.IorD = 0;
@@ -59,7 +62,7 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		}
 	}
 	//LW instruction.
-	else if (instructionToFetch.byte[0] == 0x8c){
+	else if (buffer == 0x8c){
 		job->controlSignals.PCWriteCond = 0;
 		job->controlSignals.PCWrite = 0;
 		job->controlSignals.IorD = 1;
@@ -81,7 +84,7 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
 		}
 	//SW instruction
-	else if (instructionToFetch.byte[0] == 0xac){
+	else if (buffer == 0xac){
 		job->controlSignals.PCWriteCond = 0;
 		job->controlSignals.PCWrite = 0;
 		job->controlSignals.IorD = 1;
@@ -103,7 +106,7 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
 	}
 	//BEQ (branch on equal) instruction
-	else if (instructionToFetch.byte[0] == 0x10){
+	else if (buffer == 0x10){
 		job->controlSignals.PCWriteCond = 1;
 		job->controlSignals.PCWrite = 0;
 		job->controlSignals.IorD = 0;
@@ -125,7 +128,7 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
 	}
 	//Jump instruction
-	else if (instructionToFetch.byte[0] == 0x08){
+	else if (buffer == 0x08){
 		job->controlSignals.PCWriteCond = 0;
 		job->controlSignals.PCWrite = 1;
 		job->controlSignals.IorD = 0;
