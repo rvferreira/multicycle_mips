@@ -37,7 +37,7 @@ sem_t PC_updated, PC_free, mux_memoryAdress_updated, mux_memoryAdress_free,
 		ALU_updated, ALU_free, ALUOut_updated, ALUOut_free, mux_ALUB_updated, mux_ALUB_free, mux_PC_updated,
 		mux_PC_free;
 
-sem_t ALUBuffers_syncPrint;
+sem_t ALUBuffers_syncPrint, registersInputMuxes_syncPrint;
 
 pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle,
 		mux_memoryAdress_handle, mux_WriteRegIR_handle, mux_WriteDataIR_handle,
@@ -150,9 +150,12 @@ void *mux_WriteRegIR(void *thread_id) {
 		sem_wait(&instructionRegister_updated);
 		sem_wait(&mux_WriteRegIR_free);
 
-		if (debugMode)
+		if (debugMode){
+			sem_wait(&registersInputMuxes_syncPrint);
 			cout << PC << ": Mux Write to Register received the bits from IR"
 					<< endl;
+			sem_post(&registersInputMuxes_syncPrint);
+		}
 
 		sem_post(&mux_WriteRegIR_updated);
 		sem_post(&instructionRegister_free);
@@ -165,8 +168,11 @@ void *mux_WriteDataIR(void *thread_id) {
 		sem_wait(&MDR_updated);
 		sem_wait(&mux_WriteDataIR_free);
 
-		if (debugMode)
+		if (debugMode){
+			sem_wait(&registersInputMuxes_syncPrint);
 			cout << PC << ": Mux Write Data received data from MDR" << endl;
+			sem_post(&registersInputMuxes_syncPrint);
+		}
 
 		sem_post(&mux_WriteDataIR_updated);
 		sem_post(&MDR_free);
@@ -372,6 +378,7 @@ void semaphores_init() {
 	sem_init(&mux_PC_free, 0, 1);
 
 	sem_init(&ALUBuffers_syncPrint, 0, 1);
+	sem_init(&registersInputMuxes_syncPrint, 0, 1);
 }
 
 void resourcesInit() {
