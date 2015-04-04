@@ -45,8 +45,7 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 	//TODO implement masks usage
 	//When it is "Don't care", the signal will be set to 0 for simplicity
 	//R-type instruction: add, sub, and, or, slt.
-	if (instructionToFetch.byte[0] == 0 && instructionToFetch.byte[1] == 0 &&
-			instructionToFetch.byte[2] == 0 && instructionToFetch.byte[3] == 0){
+	if (instructionToFetch.byte[0] == 0x00){
 		job->controlSignals.PCWriteCond = 0;
 		job->controlSignals.PCWrite = 0;
 		job->controlSignals.IorD = 0;
@@ -65,8 +64,7 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.RegDst = 1;
 	}
 	//LW instruction.
-	else if (instructionToFetch.byte[0] == 0 && instructionToFetch.byte[1] == 0 &&
-				instructionToFetch.byte[2] == 0 && instructionToFetch.byte[3] == 0){
+	else if (instructionToFetch.byte[0] == 0x8c){
 		job->controlSignals.PCWriteCond = 0;
 		job->controlSignals.PCWrite = 0;
 		job->controlSignals.IorD = 1;
@@ -85,8 +83,7 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.RegDst = 0;
 		}
 	//SW instruction
-	else if (instructionToFetch.byte[0] == 0 && instructionToFetch.byte[1] == 0 &&
-				instructionToFetch.byte[2] == 0 && instructionToFetch.byte[3] == 0){
+	else if (instructionToFetch.byte[0] == 0xac){
 		job->controlSignals.PCWriteCond = 0;
 		job->controlSignals.PCWrite = 0;
 		job->controlSignals.IorD = 1;
@@ -105,8 +102,7 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.RegDst = 0;
 	}
 	//BEQ (branch on equal) instruction
-	else if (instructionToFetch.byte[0] == 0 && instructionToFetch.byte[1] == 0 &&
-				instructionToFetch.byte[2] == 0 && instructionToFetch.byte[3] == 0){
+	else if (instructionToFetch.byte[0] == 0x10){
 		job->controlSignals.PCWriteCond = 1;
 		job->controlSignals.PCWrite = 0;
 		job->controlSignals.IorD = 0;
@@ -125,8 +121,7 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.RegDst = 0;
 	}
 	//Jump instruction
-	else if (instructionToFetch.byte[0] == 0 && instructionToFetch.byte[1] == 0 &&
-				instructionToFetch.byte[2] == 0 && instructionToFetch.byte[3] == 0){
+	else if (instructionToFetch.byte[0] == 0x08){
 		job->controlSignals.PCWriteCond = 0;
 		job->controlSignals.PCWrite = 1;
 		job->controlSignals.IorD = 0;
