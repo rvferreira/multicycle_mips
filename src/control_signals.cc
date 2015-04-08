@@ -32,33 +32,33 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.RegDst = 1;
 		//If instruction is an ADD, ALUCtrl = 001
 		if (instructionToFetch.byte[3] == 0x20){
-			job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
-			job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
-			job->controlSignals.ALUCtrl.ALUCtrl2 = 1;
+			job->controlSignalsALU.ALUCtrl0 = 0;
+			job->controlSignalsALU.ALUCtrl1 = 0;
+			job->controlSignalsALU.ALUCtrl2 = 1;
 		}
 		//If instruction is a SUB, ALUCtrl = 010
 		else if (instructionToFetch.byte[3] == 0x22){
-			job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
-			job->controlSignals.ALUCtrl.ALUCtrl1 = 1;
-			job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
+			job->controlSignalsALU.ALUCtrl0 = 0;
+			job->controlSignalsALU.ALUCtrl1 = 1;
+			job->controlSignalsALU.ALUCtrl2 = 0;
 		}
 		//If instruction is an AND, ALUCtrl = 011
 		else if (instructionToFetch.byte[3] == 0x24){
-			job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
-			job->controlSignals.ALUCtrl.ALUCtrl1 = 1;
-			job->controlSignals.ALUCtrl.ALUCtrl2 = 1;
+			job->controlSignalsALU.ALUCtrl0 = 0;
+			job->controlSignalsALU.ALUCtrl1 = 1;
+			job->controlSignalsALU.ALUCtrl2 = 1;
 		}
 		//If instruction is an OR, ALUCtrl = 100
 		else if (instructionToFetch.byte[3] == 0x1f){
-			job->controlSignals.ALUCtrl.ALUCtrl0 = 1;
-			job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
-			job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
+			job->controlSignalsALU.ALUCtrl0 = 1;
+			job->controlSignalsALU.ALUCtrl1 = 0;
+			job->controlSignalsALU.ALUCtrl2 = 0;
 		}
 		//If instruction is a SLT, ALUCtrl = 101
 		else if (instructionToFetch.byte[3] == 0x2a){
-			job->controlSignals.ALUCtrl.ALUCtrl0 = 1;
-			job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
-			job->controlSignals.ALUCtrl.ALUCtrl2 = 1;
+			job->controlSignalsALU.ALUCtrl0 = 1;
+			job->controlSignalsALU.ALUCtrl1 = 0;
+			job->controlSignalsALU.ALUCtrl2 = 1;
 		}
 	}
 	//LW instruction.
@@ -79,9 +79,9 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.ALUSrcA = 0;
 		job->controlSignals.RegWrite = 1;
 		job->controlSignals.RegDst = 0;
-		job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
-		job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
-		job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
+		job->controlSignalsALU.ALUCtrl0 = 0;
+		job->controlSignalsALU.ALUCtrl1 = 0;
+		job->controlSignalsALU.ALUCtrl2 = 0;
 		}
 	//SW instruction
 	else if (buffer == 0xac){
@@ -101,9 +101,9 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.ALUSrcA = 0;
 		job->controlSignals.RegWrite = 0;
 		job->controlSignals.RegDst = 0;
-		job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
-		job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
-		job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
+		job->controlSignalsALU.ALUCtrl0 = 0;
+		job->controlSignalsALU.ALUCtrl1 = 0;
+		job->controlSignalsALU.ALUCtrl2 = 0;
 	}
 	//BEQ (branch on equal) instruction
 	else if (buffer == 0x10){
@@ -123,9 +123,9 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.ALUSrcA = 1;
 		job->controlSignals.RegWrite = 0;
 		job->controlSignals.RegDst = 0;
-		job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
-		job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
-		job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
+		job->controlSignalsALU.ALUCtrl0 = 0;
+		job->controlSignalsALU.ALUCtrl1 = 0;
+		job->controlSignalsALU.ALUCtrl2 = 0;
 	}
 	//Jump instruction
 	else if (buffer == 0x08){
@@ -145,8 +145,8 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignals.ALUSrcA = 0;
 		job->controlSignals.RegWrite = 0;
 		job->controlSignals.RegDst = 0;
-		job->controlSignals.ALUCtrl.ALUCtrl0 = 0;
-		job->controlSignals.ALUCtrl.ALUCtrl1 = 0;
-		job->controlSignals.ALUCtrl.ALUCtrl2 = 0;
+		job->controlSignalsALU.ALUCtrl0 = 0;
+		job->controlSignalsALU.ALUCtrl1 = 0;
+		job->controlSignalsALU.ALUCtrl2 = 0;
 	}
 }
