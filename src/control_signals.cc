@@ -7,9 +7,31 @@
 
 #include "control_signals.h"
 
+void setControlSignalsBuffer(dataBlock instructionToFetch, int buffer, int cycle){
+	char aux = instructionToFetch.byte[0];
+	aux = (instructionToFetch.byte[0] & (char)0xFC);
+
+	if (cycle == 1){
+
+	}
+	else if (cycle == 2){
+
+	}
+	else if (cycle == 3){
+
+	}
+	else if (cycle == 4){
+
+	}
+	else if (cycle == 5){
+
+	}
+
+}
+
 void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 	char buffer = instructionToFetch.byte[0];
-	buffer = (instructionToFetch.byte[0] & (char)0xfc);
+	buffer = (instructionToFetch.byte[0] & (char)0xFC);
 
 	//When it is "Don't care", the signal will be set to 0 for simplicity
 	//R-type instruction: add, sub, and, or, slt.
