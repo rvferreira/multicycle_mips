@@ -63,6 +63,10 @@ int main(int argc, char** argv) {
 	}
 
 	fetchJobFromFile(filename.c_str(), noExtentionFilename.c_str());
+	if (pthread_create(&uc_handle, 0, uc_thread, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("UC");
+		exit(0);
+	}
 	resourcesInit();
 
 	while (1){

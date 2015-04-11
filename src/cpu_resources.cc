@@ -23,7 +23,7 @@ int MDR;
  *
  * */
 
-sem_t clock_free, clock_updated;
+sem_t clock_free, clock_updated, UC_free, UC_updated;
 
 sem_t PC_updated, PC_free, mux_memoryAdress_updated, mux_memoryAdress_free,
 		clockedMemory_updated, clockedMemory_free, MDR_updated, MDR_free,
@@ -39,15 +39,15 @@ sem_t PC_updated, PC_free, mux_memoryAdress_updated, mux_memoryAdress_free,
 
 sem_t printSync;
 
-pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle,
+pthread_t uc_handle, memory_handle, clockedMemory_handle, instructionRegister_handle,
 		mux_memoryAdress_handle, mux_WriteRegIR_handle, mux_WriteDataIR_handle,
 		signExtend_handle, shiftLeft2_muxPC_handle, shiftLeft2_muxALUB_handle,
 		mux_ALUA_handle, ALU_handle, mux_ALUB_handle, mux_PC_handle,
 		and_PC_handle, or_pc_handle, registers_handle;
 
-void createAndEnqueueJob(bool isNop) { //TODO isnop implementation
+void createAndEnqueueJob(bool isNop) {
 	SyncedInstruction *newJob = new SyncedInstruction;
-	//setControlSignals(newJob, 0);
+	setControlSignals(newJob, 0);
 }
 
 void *memory_load(void *thread_id) {
@@ -90,15 +90,16 @@ void *memory_load(void *thread_id) {
 	std::cout << SEPARATOR;
 	fclose(bincode);
 	/*Execution init*/
-	PC = 0;
+	PC = -1;
 	if (debugMode)
-		cout << "PC has been initiated in " << PC << endl;
+		cout << "PC has been initiated" << endl;
 	sem_post(&PC_updated);
 	pthread_exit(0);
 }
 
 void *mux_memoryAdress(void *thread_id) {
 	while (1) {
+		sem_wait(&UC_updated);
 		sem_wait(&PC_updated);
 		sem_wait(&mux_memoryAdress_free);
 
@@ -334,17 +335,14 @@ void *mux_PC(void *thread_id) {
 		sem_wait(&shiftLeft2_muxPC_updated);
 		sem_wait(&PC_free);
 
-		PC++;
 		if (debugMode)
-			cout << "Done! PC incremented to " << PC << endl << endl;
-
-		sem_wait(&clock_updated);
-		sem_post(&clock_free);
+			cout << "Cycle finished!" << endl << endl;
 
 		sem_post(&PC_updated);
 		sem_post(&shiftLeft2_muxPC_free);
 		sem_post(&ALU_free);
 		sem_post(&ALUOut_free);
+		sem_post(&UC_free);
 	}
 	pthread_exit(0);
 }
@@ -374,6 +372,9 @@ void *or_PC(void *thread_id) {
 void semaphores_init() {
 	sem_init(&clock_updated, 0, 0);
 	sem_init(&clock_free, 0, 1);
+
+	sem_init(&UC_updated, 0, 0);
+	sem_init(&UC_free, 0, 1);
 
 	sem_init(&PC_updated, 0, 0);
 	sem_init(&PC_free, 0, 0);
@@ -445,9 +446,7 @@ void resourcesInit() {
 		cout << THREAD_INIT_FAIL("Memory Load");
 		exit(0);
 	}
-	if (pthread_create(&clockedMemory_handle, 0, clockedMemoryAccess, NULL)
-			!= 0) {
-		//TODO incorporate clocked memory into memory
+	if (pthread_create(&clockedMemory_handle, 0, clockedMemoryAccess, NULL) != 0) {
 		cout << THREAD_INIT_FAIL("Clocked Memory");
 		exit(0);
 	}

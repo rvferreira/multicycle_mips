@@ -10,12 +10,6 @@
 
 #include "cpu_resources.h"
 
-struct UC_def {
-	SyncedInstruction job;
-	int cycle;
-};
-
-extern UC_def UC;
-
+void *uc_thread (void* thread_id);
 
 #endif /* UC_H_ */

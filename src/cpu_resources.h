@@ -14,9 +14,16 @@
 #include "control_signals.h"
 #include <list>
 
-extern sem_t clock_free, clock_updated;
+struct UC_def {
+	SyncedInstruction job;
+	int cycle;
+};
 
-extern pthread_t memory_handle, clockedMemory_handle,
+extern UC_def UC;
+
+extern sem_t clock_free, clock_updated, UC_free, UC_updated, printSync;
+
+extern pthread_t uc_handle, memory_handle, clockedMemory_handle,
 		instructionRegister_handle, mux_memoryAdress_handle,
 		mux_WriteRegIR_handle, mux_WriteDataIR_handle, signExtend_handle,
 		shiftLeft2_muxPC_handle, shiftLeft2_muxALUB_handle, mux_ALUA_handle,
