@@ -6,16 +6,14 @@
  */
 
 #include "cpu_resources.h"
+#include <iomanip>
 
 using namespace std;
 
 FILE *bincode;
-dataBlock *memoryBank;
+int *memoryBank;
 
-struct UC {
-	list<SyncedInstruction> jobs;
-	list<SyncedInstruction>::iterator cycle[CYCLES_COUNT];
-} UC;
+SyncedInstruction UC;
 
 int PC;
 int MDR;
@@ -26,6 +24,9 @@ int MDR;
  * sem_component_free means that it's available for writing
  *
  * */
+
+sem_t clock_free, clock_updated;
+
 sem_t PC_updated, PC_free, mux_memoryAdress_updated, mux_memoryAdress_free,
 		clockedMemory_updated, clockedMemory_free, MDR_updated, MDR_free,
 		instructionRegister_updated, instructionRegister_free,
@@ -49,13 +50,12 @@ pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle,
 void createAndEnqueueJob(bool isNop) { //TODO isnop implementation
 	SyncedInstruction *newJob = new SyncedInstruction;
 	//setControlSignals(newJob, 0);
-	UC.jobs.push_back(*newJob);
 }
 
-void *memory(void *thread_id) {
+void *memory_load(void *thread_id) {
 	/*memory load*/
 	fseek(bincode, 0, SEEK_END);
-	int size = (ftell(bincode) - 1) / 4;
+	int size = (ftell(bincode) - 1) / 8;
 	cout << SEPARATOR << "We have found " << size << " lines of code." << endl
 			<< SEPARATOR;
 	rewind(bincode);
@@ -64,20 +64,30 @@ void *memory(void *thread_id) {
 		exit(0);
 	}
 
-	memoryBank = (dataBlock *) malloc(sizeof(dataBlock) * size);
-	dataBlock buffer;
+	memoryBank = (int *) malloc(sizeof(int) * size);
+	int buffer;
+	char readChar;
 
 	std::cout << "Memory Initial State:" << std::endl << std::endl;
 	for (int i = 0; i < size; i++) {
 
-		for (int j = 0; j < 4; j++) {
-			buffer.byte[j] = (char) fgetc(bincode);
-			if (buffer.byte[j] == '\n')
+		buffer = 0x00000000;
+
+		for (int j = 0; j < 8; j++) {
+			readChar = (char) fgetc(bincode);
+			if (readChar == '\n'){
 				j--;
+				continue;
+			}
+
+			buffer = (buffer << 4) | hexToInt(readChar);
 		}
 
 		memoryBank[i] = buffer;
-		cout << memoryBank[i].byte << endl;
+		cout << "0x";
+		cout << setfill('0') << setw(8) << uppercase << hex << ((memoryBank[i] & 0xFFFFFFFF)>>0);
+		cout << dec;
+		cout << endl;
 	}
 	std::cout << SEPARATOR;
 	fclose(bincode);
@@ -113,8 +123,6 @@ void *clockedMemoryAccess(void *thread_id) {
 			cout << PC
 					<< ": Memory has received the Adress from Mux to Memory Address"
 					<< endl;
-		//mux0 createAndEnqueueJob(false);
-		//mux1 sw
 
 		sem_post(&clockedMemory_updated);
 		sem_post(&mux_memoryAdress_free);
@@ -301,7 +309,9 @@ void *ALU(void *thread_id) {
 		sem_wait(&ALU_free);
 
 		if (debugMode)
+			sem_wait(&printSync);
 			cout << PC << ": ALU has received data from buffers" << endl;
+			sem_post(&printSync);
 
 		sem_post(&ALU_updated);
 
@@ -329,7 +339,9 @@ void *mux_PC(void *thread_id) {
 		PC++;
 		if (debugMode)
 			cout << "Done! PC incremented to " << PC << endl << endl;
-		simulateClockDelay();
+
+		sem_wait(&clock_updated);
+		sem_post(&clock_free);
 
 		sem_post(&PC_updated);
 		sem_post(&shiftLeft2_muxPC_free);
@@ -362,8 +374,11 @@ void *or_PC(void *thread_id) {
 }
 
 void semaphores_init() {
+	sem_init(&clock_updated, 0, 0);
+	sem_init(&clock_free, 0, 1);
+
 	sem_init(&PC_updated, 0, 0);
-	sem_init(&PC_free, 0, 1);
+	sem_init(&PC_free, 0, 0);
 
 	sem_init(&mux_memoryAdress_updated, 0, 0);
 	sem_init(&mux_memoryAdress_free, 0, 1);
@@ -428,8 +443,8 @@ void resourcesInit() {
 //	sem_init(&instructions_updated, 0, 0);
 //	sem_init(&instructions_free, 0, CYCLES_COUNT);
 
-	if (pthread_create(&memory_handle, 0, memory, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("Memory");
+	if (pthread_create(&memory_handle, 0, memory_load, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("Memory Load");
 		exit(0);
 	}
 	if (pthread_create(&clockedMemory_handle, 0, clockedMemoryAccess, NULL)

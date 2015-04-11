@@ -53,7 +53,6 @@ struct FetchedInstruction{
 struct SyncedInstruction{
 	ALUControl controlSignalsALU;
 	FetchedInstruction controlSignals;
-	int PC;
 };
 
 typedef struct { char byte[4]; } dataBlock;
@@ -65,5 +64,6 @@ extern bool debugMode;
 void fetchJobFromFile(const char* filename, const char* noExtensionFilename);
 void simulateClockDelay();
 void disableClockDelay();
+int hexToInt(char c);
 
 #endif /* UTILS_H_ */

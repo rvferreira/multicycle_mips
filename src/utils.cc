@@ -46,3 +46,8 @@ void simulateClockDelay() {
 void disableClockDelay() {
 	nodClock = true;
 }
+
+int hexToInt(char c){
+	if ((int) c < 58) return ((int) (c - 48));
+	return (int) (c - 65 + 10);
+}
