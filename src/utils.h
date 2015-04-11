@@ -48,10 +48,10 @@ struct FetchedInstruction{
 		ALUSrcA,
 		RegWrite,
 		RegDst;
-		ALUControl ALUCtrl;
 };
 
 struct SyncedInstruction{
+	ALUControl controlSignalsALU;
 	FetchedInstruction controlSignals;
 	int PC;
 };
