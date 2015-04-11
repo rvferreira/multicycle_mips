@@ -11,7 +11,7 @@
 #include <set>
 #include <map>
 
-#include "cpu_resources.h"
+#include "uc.h"
 
 using namespace std;
 

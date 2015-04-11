@@ -6,6 +6,7 @@
 CC_SRCS += \
 ../src/control_signals.cc \
 ../src/cpu_resources.cc \
+../src/uc.cc \
 ../src/utils.cc 
 
 CPP_SRCS += \
@@ -14,12 +15,14 @@ CPP_SRCS += \
 CC_DEPS += \
 ./src/control_signals.d \
 ./src/cpu_resources.d \
+./src/uc.d \
 ./src/utils.d 
 
 OBJS += \
 ./src/control_signals.o \
 ./src/cpu_resources.o \
 ./src/main.o \
+./src/uc.o \
 ./src/utils.o 
 
 CPP_DEPS += \
