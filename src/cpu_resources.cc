@@ -48,7 +48,7 @@ pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle,
 
 void createAndEnqueueJob(bool isNop) { //TODO isnop implementation
 	SyncedInstruction *newJob = new SyncedInstruction;
-	setControlSignals(newJob, memoryBank[PC]);
+	//setControlSignals(newJob, 0);
 	UC.jobs.push_back(*newJob);
 }
 
