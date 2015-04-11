@@ -10,6 +10,6 @@
 
 #include "utils.h"
 
-void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch);
+void setControlSignals(SyncedInstruction *job, int instructionToFetch);
 
 #endif /* CONTROL_SIGNALS_H_ */

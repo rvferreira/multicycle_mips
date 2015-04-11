@@ -20,7 +20,7 @@ extern pthread_t memory_handle, clockedMemory_handle,
 		shiftLeft2_muxPC_handle, shiftLeft2_muxALUB_handle, mux_ALUA_handle,
 		ALU_handle, mux_ALUB_handle, mux_PC_handle, and_PC_handle, or_pc_handle;
 
-extern dataBlock *memoryBank;
+extern int *memoryBank;
 extern int PC;
 extern int MDR;
 

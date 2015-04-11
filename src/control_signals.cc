@@ -7,8 +7,8 @@
 
 #include "control_signals.h"
 
-void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
-	char buffer = instructionToFetch.byte[0];
+void setControlSignals(SyncedInstruction *job, int instructionToFetch) {
+	/*char buffer = instructionToFetch.byte[0];
 	buffer = (instructionToFetch.byte[0] & (char)0xfc);
 
 	//When it is "Don't care", the signal will be set to 0 for simplicity
@@ -148,5 +148,5 @@ void setControlSignals(SyncedInstruction *job, dataBlock instructionToFetch) {
 		job->controlSignalsALU.ALUCtrl0 = 0;
 		job->controlSignalsALU.ALUCtrl1 = 0;
 		job->controlSignalsALU.ALUCtrl2 = 0;
-	}
+	}*/
 }

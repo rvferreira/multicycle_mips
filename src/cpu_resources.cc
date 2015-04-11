@@ -6,16 +6,14 @@
  */
 
 #include "cpu_resources.h"
+#include <iomanip>
 
 using namespace std;
 
 FILE *bincode;
-dataBlock *memoryBank;
+int *memoryBank;
 
-struct UC {
-	list<SyncedInstruction> jobs;
-	list<SyncedInstruction>::iterator cycle[CYCLES_COUNT];
-} UC;
+SyncedInstruction UC;
 
 int PC;
 int MDR;
@@ -49,13 +47,12 @@ pthread_t memory_handle, clockedMemory_handle, instructionRegister_handle,
 void createAndEnqueueJob(bool isNop) { //TODO isnop implementation
 	SyncedInstruction *newJob = new SyncedInstruction;
 	setControlSignals(newJob, memoryBank[PC]);
-	UC.jobs.push_back(*newJob);
 }
 
 void *memory(void *thread_id) {
 	/*memory load*/
 	fseek(bincode, 0, SEEK_END);
-	int size = (ftell(bincode) - 1) / 4;
+	int size = (ftell(bincode) - 1) / 8;
 	cout << SEPARATOR << "We have found " << size << " lines of code." << endl
 			<< SEPARATOR;
 	rewind(bincode);
@@ -64,20 +61,29 @@ void *memory(void *thread_id) {
 		exit(0);
 	}
 
-	memoryBank = (dataBlock *) malloc(sizeof(dataBlock) * size);
-	dataBlock buffer;
+	memoryBank = (int *) malloc(sizeof(int) * size);
+	int buffer;
+	char readChar;
 
 	std::cout << "Memory Initial State:" << std::endl << std::endl;
 	for (int i = 0; i < size; i++) {
 
-		for (int j = 0; j < 4; j++) {
-			buffer.byte[j] = (char) fgetc(bincode);
-			if (buffer.byte[j] == '\n')
+		buffer = 0x00000000;
+
+		for (int j = 0; j < 8; j++) {
+			readChar = (char) fgetc(bincode);
+			if (readChar == '\n'){
 				j--;
+				continue;
+			}
+
+			buffer = (buffer << 4) | hexToInt(readChar);
 		}
 
 		memoryBank[i] = buffer;
-		cout << memoryBank[i].byte << endl;
+		cout << "0x";
+		cout << setfill('0') << setw(8) << uppercase << hex << ((memoryBank[i] & 0xFFFFFFFF)>>0);
+		cout << endl;
 	}
 	std::cout << SEPARATOR;
 	fclose(bincode);
@@ -113,8 +119,6 @@ void *clockedMemoryAccess(void *thread_id) {
 			cout << PC
 					<< ": Memory has received the Adress from Mux to Memory Address"
 					<< endl;
-		//mux0 createAndEnqueueJob(false);
-		//mux1 sw
 
 		sem_post(&clockedMemory_updated);
 		sem_post(&mux_memoryAdress_free);
