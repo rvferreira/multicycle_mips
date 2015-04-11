@@ -13,8 +13,6 @@ using namespace std;
 FILE *bincode;
 int *memoryBank;
 
-SyncedInstruction UC;
-
 int PC;
 int MDR;
 
