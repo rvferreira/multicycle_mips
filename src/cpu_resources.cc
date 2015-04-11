@@ -24,6 +24,9 @@ int MDR;
  * sem_component_free means that it's available for writing
  *
  * */
+
+sem_t clock_free, clock_updated;
+
 sem_t PC_updated, PC_free, mux_memoryAdress_updated, mux_memoryAdress_free,
 		clockedMemory_updated, clockedMemory_free, MDR_updated, MDR_free,
 		instructionRegister_updated, instructionRegister_free,
@@ -49,7 +52,7 @@ void createAndEnqueueJob(bool isNop) { //TODO isnop implementation
 	setControlSignals(newJob, memoryBank[PC]);
 }
 
-void *memory(void *thread_id) {
+void *memory_load(void *thread_id) {
 	/*memory load*/
 	fseek(bincode, 0, SEEK_END);
 	int size = (ftell(bincode) - 1) / 8;
@@ -83,6 +86,7 @@ void *memory(void *thread_id) {
 		memoryBank[i] = buffer;
 		cout << "0x";
 		cout << setfill('0') << setw(8) << uppercase << hex << ((memoryBank[i] & 0xFFFFFFFF)>>0);
+		cout << dec;
 		cout << endl;
 	}
 	std::cout << SEPARATOR;
@@ -305,7 +309,9 @@ void *ALU(void *thread_id) {
 		sem_wait(&ALU_free);
 
 		if (debugMode)
+			sem_wait(&printSync);
 			cout << PC << ": ALU has received data from buffers" << endl;
+			sem_post(&printSync);
 
 		sem_post(&ALU_updated);
 
@@ -333,7 +339,9 @@ void *mux_PC(void *thread_id) {
 		PC++;
 		if (debugMode)
 			cout << "Done! PC incremented to " << PC << endl << endl;
-		simulateClockDelay();
+
+		sem_wait(&clock_updated);
+		sem_post(&clock_free);
 
 		sem_post(&PC_updated);
 		sem_post(&shiftLeft2_muxPC_free);
@@ -366,8 +374,11 @@ void *or_PC(void *thread_id) {
 }
 
 void semaphores_init() {
+	sem_init(&clock_updated, 0, 0);
+	sem_init(&clock_free, 0, 1);
+
 	sem_init(&PC_updated, 0, 0);
-	sem_init(&PC_free, 0, 1);
+	sem_init(&PC_free, 0, 0);
 
 	sem_init(&mux_memoryAdress_updated, 0, 0);
 	sem_init(&mux_memoryAdress_free, 0, 1);
@@ -432,8 +443,8 @@ void resourcesInit() {
 //	sem_init(&instructions_updated, 0, 0);
 //	sem_init(&instructions_free, 0, CYCLES_COUNT);
 
-	if (pthread_create(&memory_handle, 0, memory, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("Memory");
+	if (pthread_create(&memory_handle, 0, memory_load, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("Memory Load");
 		exit(0);
 	}
 	if (pthread_create(&clockedMemory_handle, 0, clockedMemoryAccess, NULL)

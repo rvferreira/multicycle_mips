@@ -64,8 +64,12 @@ int main(int argc, char** argv) {
 
 	fetchJobFromFile(filename.c_str(), noExtentionFilename.c_str());
 	resourcesInit();
-	//jobStart()
-	//jobEndSync();
+
+	while (1){
+		sem_wait(&clock_free);
+		simulateClockDelay();
+		sem_post(&clock_updated);
+	}
 
 	fflush(0);
 	pthread_join(memory_handle, 0);

@@ -14,6 +14,8 @@
 #include "control_signals.h"
 #include <list>
 
+extern sem_t clock_free, clock_updated;
+
 extern pthread_t memory_handle, clockedMemory_handle,
 		instructionRegister_handle, mux_memoryAdress_handle,
 		mux_WriteRegIR_handle, mux_WriteDataIR_handle, signExtend_handle,
