@@ -10,22 +10,22 @@
 
 void controlSignalsAttrb(SyncedInstruction *job, int buffer) {
 
-		job->controlSignals.PCWriteCond = 0;
-		job->controlSignals.PCWrite = 0;
-		job->controlSignals.IorD = 0;
-		job->controlSignals.MemRead = 0;
-		job->controlSignals.MemWrite = 0;
-		job->controlSignals.MemToReg = 0;
-		job->controlSignals.IRWrite = 0;
-		job->controlSignals.PCSource0 = 0;
-		job->controlSignals.PCSource1 = 0;
-		job->controlSignals.ALUOp0 = 1;
-		job->controlSignals.ALUOp1 = 0;
-		job->controlSignals.ALUSrcB0 = 0;
-		job->controlSignals.ALUSrcB1 = 0;
-		job->controlSignals.ALUSrcA = 1;
-		job->controlSignals.RegWrite = 1;
-		job->controlSignals.RegDst = 1;
+		job->controlSignals.PCWriteCond = (bool)(buffer & ativa_PCWriteCond);
+		job->controlSignals.PCWrite = (bool)(buffer & ativa_PCWrite);
+		job->controlSignals.IorD = (bool)(buffer & ativa_IorD);
+		job->controlSignals.MemRead = (bool)(buffer & ativa_MemRead);
+		job->controlSignals.MemWrite = (bool)(buffer & ativa_MemWrite);
+		job->controlSignals.MemToReg = (bool)(buffer & ativa_MemtoReg);
+		job->controlSignals.IRWrite = (bool)(buffer & ativa_IRWrite);
+		job->controlSignals.PCSource0 = (bool)(buffer & ativa_PCSource0);
+		job->controlSignals.PCSource1 = (bool)(buffer & ativa_PCSource1);
+		job->controlSignals.ALUOp0 = (bool)(buffer & ativa_ALUOp0);
+		job->controlSignals.ALUOp1 = (bool)(buffer & ativa_ALUOp1);
+		job->controlSignals.ALUSrcB0 = (bool)(buffer & ativa_ALUSrcB0);
+		job->controlSignals.ALUSrcB1 = (bool)(buffer & ativa_ALUSrcB1);
+		job->controlSignals.ALUSrcA = (bool)(buffer & ativa_ALUSrcA);
+		job->controlSignals.RegWrite = (bool)(buffer & ativa_RegWrite);
+		job->controlSignals.RegDst = (bool)(buffer & ativa_RegDst);
 }
 
 void setControlSignals(SyncedInstruction *job, int cycle){
@@ -97,4 +97,6 @@ void setControlSignals(SyncedInstruction *job, int cycle){
 		buffer |= ativa_PCSource0;
 		buffer &= desativa_PCSource1;
 	}
+
+	controlSignalsAttrb(job, buffer);
 }
