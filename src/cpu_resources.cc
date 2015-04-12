@@ -13,8 +13,7 @@ using namespace std;
 FILE *bincode;
 int *memoryBank;
 
-int PC;
-int MDR;
+int PC, MDR, IR, A, B, AluOut;
 
 /* component level sync mutexes
  *
@@ -120,7 +119,7 @@ void *mux_memoryAdress(void *thread_id) {
 		sem_wait(&mux_memoryAdress_free);
 		sem_wait(&PC_updated);
 
-		if (UC.job.controlSignals.IorD == 0) {
+		if (UC.job.controlSignals.IorD == false) {
 			mux_memoryAdress_output = PC;
 			if (debugMode){
 				sem_wait(&printSync);
@@ -137,7 +136,6 @@ void *mux_memoryAdress(void *thread_id) {
 
 void *clockedMemoryAccess(void *thread_id) {
 	while (1) {
-		//simulateClockDelay();
 		sem_wait(&mux_memoryAdress_updated);
 		sem_wait(&clockedMemory_free);
 
@@ -166,6 +164,10 @@ void *instructionRegister(void *thread_id) {
 		sem_wait(&instructionRegister_free);
 		sem_wait(&IR_0_free);
 		sem_wait(&IR_1_free);
+
+		if(UC.job.controlSignals.IRWrite == true){
+			IR = memory_output;
+		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
@@ -248,7 +250,7 @@ void *registers(void *thread_id) {
 	pthread_exit(0);
 }
 
-void *mux_signExtend(void *thread_id) {
+void *signExtend(void *thread_id) {
 	while (1) {
 
 		sem_wait(&IR_0_updated);
@@ -557,7 +559,7 @@ void resourcesInit() {
 		cout << THREAD_INIT_FAIL("MuxWriteDataIR");
 		exit(0);
 	}
-	if (pthread_create(&signExtend_handle, 0, mux_signExtend, NULL) != 0) {
+	if (pthread_create(&signExtend_handle, 0, signExtend, NULL) != 0) {
 		cout << THREAD_INIT_FAIL("MuxSign Extend");
 		exit(0);
 	}
