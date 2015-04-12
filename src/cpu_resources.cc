@@ -12,6 +12,7 @@ using namespace std;
 
 FILE *bincode;
 int *memoryBank;
+int registersBank[32];
 
 int PC, MDR, IR, A, B, AluOut;
 
@@ -22,7 +23,7 @@ int PC, MDR, IR, A, B, AluOut;
  *
  * */
 
-sem_t 	UC_free,			//
+sem_t UC_free,			//
 		UC_mux_memAddress,	//
 		UC_mux_WriteRegIR,	//
 		UC_mux_WriteDataIR,	//
@@ -31,7 +32,7 @@ sem_t 	UC_free,			//
 		UC_mux_PC;			//
 
 sem_t clock_free, clock_updated,									//
-		PC_updated, PC_free,										//PC updated for mux_memAddress
+		PC_updated, PC_free,					//PC updated for mux_memAddress
 		mux_memoryAdress_updated, mux_memoryAdress_free,			//
 		clockedMemory_updated, clockedMemory_free, 					//
 		MDR_updated, MDR_free,										//
@@ -104,6 +105,13 @@ void *memory_load(void *thread_id) {
 	}
 	std::cout << SEPARATOR;
 	fclose(bincode);
+
+	/* registers load */
+	for (int i = 0; i < 32; i++){
+		registersBank[i] = i;
+	}
+
+
 	/*Execution init*/
 	PC = 0;
 	if (debugMode)
@@ -121,7 +129,7 @@ void *mux_memoryAdress(void *thread_id) {
 
 		if (UC.job.controlSignals.IorD == false) {
 			mux_memoryAdress_output = PC;
-			if (debugMode){
+			if (debugMode) {
 				sem_wait(&printSync);
 				cout << PC << ": Mux to Memory Address has received PC" << endl;
 				sem_post(&printSync);
@@ -165,7 +173,7 @@ void *instructionRegister(void *thread_id) {
 		sem_wait(&IR_0_free);
 		sem_wait(&IR_1_free);
 
-		if(UC.job.controlSignals.IRWrite == true){
+		if (UC.job.controlSignals.IRWrite == true) {
 			IR = memory_output;
 		}
 
@@ -236,6 +244,11 @@ void *registers(void *thread_id) {
 		sem_wait(&registers_free_0);
 		sem_wait(&registers_free_1);
 
+		A = readData1;
+		B = readData2;
+		readData1 = registersBank[(int) ((IR & separa_rs) >> 21)];
+		readData2 = registersBank[(int) ((IR & separa_rt) >> 16)];
+
 		if (debugMode) {
 			sem_wait(&printSync);
 			cout << PC << ": Registers Bank being accessed" << endl;
@@ -255,6 +268,9 @@ void *signExtend(void *thread_id) {
 
 		sem_wait(&IR_0_updated);
 		sem_wait(&signExtend_free);
+
+		signExtend_output = (int) (IR & 0x0000FFFF);
+		if (IR & 0x00008000) signExtend_output |= 0xFFFF0000;
 
 		if (debugMode) {
 			sem_wait(&printSync);
@@ -289,6 +305,8 @@ void *shiftLeft2_muxALUB(void *thread_id) {
 	while (1) {
 		sem_wait(&signExtend_updated);
 		sem_wait(&shiftLeft2_muxALUB_free);
+
+		ssl_ALUB_output = signExtend_output << 2;
 
 		if (debugMode) {
 			sem_wait(&printSync);
@@ -337,14 +355,14 @@ void *mux_ALUB(void *thread_id) {
 		sem_wait(&mux_ALUB_free);
 		sem_wait(&shiftLeft2_muxALUB_updated);
 
-		if (UC.job.controlSignals.ALUOp0 == false
-				&& UC.job.controlSignals.ALUOp1 == false) {
-			ALU_output = mux_ALUA_output + mux_ALUB_output;
-		}
-
 		if (UC.job.controlSignals.ALUSrcB0 == false
 				&& UC.job.controlSignals.ALUSrcB1 == true) {
 			mux_ALUB_output = 1; // para incrementar o PC em uma instrução, somamos 1 em int (4 bytes)
+		}
+
+		if (UC.job.controlSignals.ALUSrcB0 == true
+				&& UC.job.controlSignals.ALUSrcB1 == true) {
+			mux_ALUB_output = ssl_ALUB_output; // para incrementar o PC em uma instrução, somamos 1 em int (4 bytes)
 		}
 
 		if (debugMode) {
@@ -367,6 +385,12 @@ void *ALU(void *thread_id) {
 		sem_wait(&mux_ALUA_updated);
 		sem_wait(&mux_ALUB_updated);
 		sem_wait(&ALU_free);
+
+		AluOut = ALU_output;
+		if (UC.job.controlSignals.ALUOp0 == false
+				&& UC.job.controlSignals.ALUOp1 == false) {
+			ALU_output = mux_ALUA_output + mux_ALUB_output;
+		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
@@ -404,11 +428,11 @@ void *mux_PC(void *thread_id) {
 
 		if (UC.job.controlSignals.PCSource0 == false
 				&& UC.job.controlSignals.PCSource1 == false) {
-			if (UC.job.controlSignals.PCWrite == true){
+			if (UC.job.controlSignals.PCWrite == true) {
 				PC = ALU_output;
 				if (debugMode) {
 					sem_wait(&printSync);
-					cout << "PC incremented to "<< PC << endl;
+					cout << "PC incremented to " << PC << endl;
 					sem_post(&printSync);
 				}
 			}

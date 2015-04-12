@@ -18,6 +18,7 @@
 
 #include <fstream>
 #include <string.h>
+#include "mascara.h"
 
 #define SEPARATOR "===============================================\n"
 

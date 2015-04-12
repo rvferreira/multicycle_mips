@@ -6,7 +6,6 @@
  */
 
 #include "control_signals.h"
-#include "mascara.h"
 
 void controlSignalsAttrb(SyncedInstruction *job, int buffer) {
 
