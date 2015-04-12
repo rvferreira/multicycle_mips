@@ -11,24 +11,69 @@ using namespace std;
 
 UC_def UC;
 
-int dispatchTable(FetchedInstruction ir) {
+int dispatchTable() {
 	//Tabela de Despacho para o ciclo 1
-	return 0;
+	int cycle;
+	switch (IR&separa_cop) {
+		// instruction type-r
+		case 0x00000000: {
+			cycle = 6;
+			break;
+		}
+		// instruction beq
+		case 0x10000000: {
+			cycle = 8; 
+			break;
+		}
+		// instruction jump
+		case 0x08000000: {
+			cycle = 9;
+			break;
+		}
+		//  instruction lw
+		case 0x8c000000: {
+			cycle = 2;
+			break;
+		}
+		// instruction sw
+		case 0xac000000:{
+			cycle = 2;
+			break;
+		}
+	}
+
+	return cycle;
 }
 
-int dispatchTable2(FetchedInstruction ir) {
+int dispatchTable2() {
 	//Tabela de Despacho para o ciclo 2
-	return 0;
+	int cycle;
+	switch (IR&separa_cop){
+		
+		// instruction lw
+		case 0x8c000000: {
+			cycle = 3;
+			break;
+		}
+
+		// instruction sw
+		case 0xac000000: {
+			cycle = 5; 
+			break;
+		}
+	}
+
+	return cycle; 
 }
 
-int nextCycle(FetchedInstruction ir, int cycle) {
+int nextCycle(int cycle) {
 	int newCycle = 0;
 	if ((cycle == 0) || (cycle == 3) || (cycle == 6))
 		newCycle = cycle + 1;
 	else if (cycle == 1)
-		newCycle = dispatchTable(ir);
+		newCycle = dispatchTable();
 	else if (cycle == 2)
-		newCycle = dispatchTable2(ir);
+		newCycle = dispatchTable2();
 
 	if (debugMode){
 		sem_wait(&printSync);
@@ -54,7 +99,7 @@ void *uc_thread(void* thread_id) {
 		sem_wait(&clock_updated);
 		sem_wait(&UC_free);
 
-		UC.cycle = nextCycle(UC.job.controlSignals, UC.cycle);
+		UC.cycle = nextCycle(UC.cycle);
 		setControlSignals(&(UC.job), UC.cycle);
 
 		UC_update();
