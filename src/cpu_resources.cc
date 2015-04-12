@@ -252,6 +252,8 @@ void *registers(void *thread_id) {
 		if (debugMode) {
 			sem_wait(&printSync);
 			cout << PC << ": Registers Bank being accessed" << endl;
+			cout << "    A has received " << A << endl;
+			cout << "    B has received " << B << endl;
 			sem_post(&printSync);
 		}
 
@@ -275,6 +277,7 @@ void *signExtend(void *thread_id) {
 		if (debugMode) {
 			sem_wait(&printSync);
 			cout << PC << ": Sign Extend has operated" << endl;
+			cout << "    resulting in " << hex << signExtend_output << dec << endl;
 			sem_post(&printSync);
 		}
 
