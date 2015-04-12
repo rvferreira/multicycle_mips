@@ -12,6 +12,7 @@
 
 #include "utils.h"
 #include "control_signals.h"
+#include "commonVariables.h"
 #include <list>
 
 struct UC_def {
@@ -21,7 +22,15 @@ struct UC_def {
 
 extern UC_def UC;
 
-extern sem_t clock_free, clock_updated, UC_free, UC_updated, printSync;
+extern sem_t UC_free,		//
+		UC_mux_memAddress,	//
+		UC_mux_WriteRegIR,	//
+		UC_mux_WriteDataIR,	//
+		UC_mux_ALUA,		//
+		UC_mux_ALUB,		//
+		UC_mux_PC;			//
+
+extern sem_t clock_free, clock_updated, printSync;
 
 extern pthread_t uc_handle, memory_handle, clockedMemory_handle,
 		instructionRegister_handle, mux_memoryAdress_handle,
@@ -32,9 +41,6 @@ extern pthread_t uc_handle, memory_handle, clockedMemory_handle,
 extern int *memoryBank;
 extern int PC;
 extern int MDR;
-
-//struct jobInstruction {syncMutexes, UCState, ALUCState}
-//jobInstruction list pipeline[PIPELINE_SIZE]
 
 void resourcesInit();
 

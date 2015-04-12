@@ -30,16 +30,22 @@ int nextCycle(FetchedInstruction ir, int cycle) {
 	else if (cycle == 2)
 		newCycle = dispatchTable2(ir);
 
-	if (debugMode)
+	if (debugMode){
 		sem_wait(&printSync);
-	if (newCycle)
 		cout << PC << ": Entering cycle " << newCycle << endl;
-	else if (PC!=-1)
-		cout << "Instruction finished" << endl << endl;
-	;
-	sem_post(&printSync);
+		sem_post(&printSync);
+	}
 
 	return newCycle;
+}
+
+void UC_update(){
+	sem_post(&UC_mux_memAddress);
+	sem_post(&UC_mux_WriteRegIR);
+	sem_post(&UC_mux_WriteDataIR);
+	sem_post(&UC_mux_ALUA);
+	sem_post(&UC_mux_ALUB);
+	sem_post(&UC_mux_PC);
 }
 
 void *uc_thread(void* thread_id) {
@@ -49,13 +55,9 @@ void *uc_thread(void* thread_id) {
 		sem_wait(&UC_free);
 
 		UC.cycle = nextCycle(UC.job.controlSignals, UC.cycle);
-		if (!UC.cycle) {
-			PC++;
-			if (!PC) cout << "PC has been incremented to " << PC << endl << endl;
-		}
 		setControlSignals(&(UC.job), UC.cycle);
 
-		sem_post(&UC_updated);
+		UC_update();
 		sem_post(&clock_free);
 	}
 	pthread_exit(0);
