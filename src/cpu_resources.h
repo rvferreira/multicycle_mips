@@ -42,5 +42,6 @@ extern int *memoryBank;
 extern int PC, MDR, IR, A, B, AluOut;
 
 void resourcesInit();
+void refreshBuffers();
 
 #endif /* CPU_RESOURCES_H_ */

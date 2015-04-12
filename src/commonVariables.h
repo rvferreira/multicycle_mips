@@ -17,6 +17,8 @@ extern int ssl_ALUB_output;
 extern int signExtend_output;
 extern int readData1;
 extern int readData2;
+extern int mux_writeReg_output;
+extern int mux_writeData_output;
 
 
 #endif /* COMMONVARIABLES_H_ */

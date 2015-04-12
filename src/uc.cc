@@ -85,6 +85,7 @@ int nextCycle(int cycle) {
 }
 
 void UC_update(){
+	refreshBuffers();
 	sem_post(&UC_mux_memAddress);
 	sem_post(&UC_mux_WriteRegIR);
 	sem_post(&UC_mux_WriteDataIR);

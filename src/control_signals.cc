@@ -50,7 +50,7 @@ void setControlSignals(SyncedInstruction *job, int cycle){
 		buffer &= desativa_ALUOp1;
 	}
 	else if (cycle == 2){
-		buffer &= desativa_ALUSrcA;
+		buffer |= ativa_ALUSrcA;
 		buffer |= ativa_ALUSrcB0;
 		buffer &= desativa_ALUSrcB1;
 		buffer &= desativa_ALUOp0;
@@ -86,7 +86,7 @@ void setControlSignals(SyncedInstruction *job, int cycle){
 		buffer &= desativa_ALUSrcB0;
 		buffer &= desativa_ALUSrcB1;
 		buffer &= desativa_ALUOp0;
-		buffer &= desativa_ALUOp1;
+		buffer |= ativa_ALUOp1;
 		buffer &= desativa_PCSource0;
 		buffer |= ativa_PCSource1;
 		buffer |= ativa_PCWriteCond;

@@ -14,3 +14,5 @@ int ssl_ALUB_output;
 int signExtend_output;
 int readData1;
 int readData2;
+int mux_writeReg_output;
+int mux_writeData_output;
