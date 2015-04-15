@@ -71,7 +71,6 @@ int main(int argc, char** argv) {
 
 	while (1){
 		if (!sem_trywait(&invalid_opcode)) {
-			cout << "HADOUKEEEEEEEN!" << endl;
 			break;
 		}
 		sem_wait(&clock_free);
