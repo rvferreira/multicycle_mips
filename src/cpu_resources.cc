@@ -77,7 +77,6 @@ void *memory_load(void *thread_id) {
 	}
 
 	memoryBank = (int *) malloc(sizeof(int) * (size + 128));
-	memoryBank[10] = 50;
 	int buffer;
 	char readChar;
 
@@ -165,6 +164,9 @@ void *clockedMemoryAccess(void *thread_id) {
 
 		if (UC.job.controlSignals.MemRead == true) {
 			memory_output = memoryBank[mux_memoryAdress_output];
+		}
+		if (UC.job.controlSignals.MemWrite == true) {
+			memoryBank[mux_memoryAdress_output] = B;
 		}
 
 		if (debugMode) {
@@ -390,18 +392,23 @@ void *mux_ALUB(void *thread_id) {
 		sem_wait(&shiftLeft2_muxALUB_updated);
 
 		if (UC.job.controlSignals.ALUSrcB0 == false
+				&& UC.job.controlSignals.ALUSrcB1 == false) {
+			mux_ALUB_output = B;
+		}
+
+		if (UC.job.controlSignals.ALUSrcB0 == false
 				&& UC.job.controlSignals.ALUSrcB1 == true) {
 			mux_ALUB_output = 1; // para incrementar o PC em uma instrução, somamos 1 em int (4 bytes)
 		}
 
 		else if (UC.job.controlSignals.ALUSrcB0 == true
 				&& UC.job.controlSignals.ALUSrcB1 == false) {
-			mux_ALUB_output = signExtend_output; // para incrementar o PC em uma instrução, somamos 1 em int (4 bytes)
+			mux_ALUB_output = signExtend_output;
 		}
 
 		else if (UC.job.controlSignals.ALUSrcB0 == true
 				&& UC.job.controlSignals.ALUSrcB1 == true) {
-			mux_ALUB_output = ssl_ALUB_output; // para incrementar o PC em uma instrução, somamos 1 em int (4 bytes)
+			mux_ALUB_output = ssl_ALUB_output;
 		}
 
 		if (debugMode) {
