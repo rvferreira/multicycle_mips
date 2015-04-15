@@ -40,6 +40,10 @@ int dispatchTable() {
 			cycle = 2;
 			break;
 		}
+		case 0xFC000000:{
+			cycle = -1;
+			sem_post(&invalid_opcode);
+		}
 	}
 
 	return cycle;
@@ -77,7 +81,8 @@ int nextCycle(int cycle) {
 
 	if (debugMode){
 		sem_wait(&printSync);
-		cout << PC << ": Entering cycle " << newCycle << endl;
+		if (newCycle == -1) cout << "Terminate instruction found. Hasta la vista, Baby." << endl << endl;
+		else cout << PC << ": Entering cycle " << newCycle << endl;
 		sem_post(&printSync);
 	}
 
@@ -103,7 +108,7 @@ void *uc_thread(void* thread_id) {
 		UC.cycle = nextCycle(UC.cycle);
 		setControlSignals(&(UC.job), UC.cycle);
 
-		UC_update();
+		if (UC.cycle != -1) UC_update();
 		sem_post(&clock_free);
 	}
 	pthread_exit(0);

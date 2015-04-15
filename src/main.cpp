@@ -70,27 +70,30 @@ int main(int argc, char** argv) {
 	resourcesInit();
 
 	while (1){
+		if (!sem_trywait(&invalid_opcode)) {
+			cout << "HADOUKEEEEEEEN!" << endl;
+			break;
+		}
 		sem_wait(&clock_free);
-		simulateClockDelay();
+		//simulateClockDelay();
 		sem_post(&clock_updated);
 	}
 
 	fflush(0);
-	pthread_join(memory_handle, 0);
-	pthread_join(clockedMemory_handle, 0);
-	pthread_join(instructionRegister_handle, 0);
-	pthread_join(mux_memoryAdress_handle, 0);
-	pthread_join(mux_WriteRegIR_handle, 0);
-	pthread_join(mux_WriteDataIR_handle, 0);
-	pthread_join(signExtend_handle, 0);
-	pthread_join(shiftLeft2_muxPC_handle, 0);
-	pthread_join(shiftLeft2_muxALUB_handle, 0);
-	pthread_join(mux_ALUA_handle, 0);
-	pthread_join(ALU_handle, 0);
-	pthread_join(mux_ALUB_handle, 0);
-	pthread_join(mux_PC_handle, 0);
-	pthread_join(and_PC_handle, 0);
-	pthread_join(or_pc_handle, 0);
+//	pthread_join(memory_handle, 0);
+//	pthread_join(clockedMemory_handle, 0);
+//	pthread_join(instructionRegister_handle, 0);
+//	pthread_join(mux_memoryAdress_handle, 0);
+//	pthread_join(mux_WriteRegIR_handle, 0);
+//	pthread_join(mux_WriteDataIR_handle, 0);
+//	pthread_join(signExtend_handle, 0);
+//	pthread_join(shiftLeft2_muxPC_handle, 0);
+//	pthread_join(shiftLeft2_muxALUB_handle, 0);
+//	pthread_join(mux_ALUA_handle, 0);
+//	pthread_join(ALU_handle, 0);
+//	pthread_join(mux_ALUB_handle, 0);
+//	pthread_join(mux_PC_handle, 0);
+//	pthread_join(ports_PC_handle, 0);
 
 	fflush(0);
 	printf("\nPress any key to terminate.\n");

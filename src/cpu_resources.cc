@@ -29,10 +29,11 @@ sem_t UC_free,			//
 		UC_mux_WriteDataIR,	//
 		UC_mux_ALUA,		//
 		UC_mux_ALUB,		//
-		UC_mux_PC;			//
+		UC_mux_PC,			//
+		invalid_opcode;
 
 sem_t clock_free, clock_updated,									//
-		PC_updated, PC_free,					//PC updated for mux_memAddress
+		PC_updated, PC_free,										//PC updated for mux_memAddress
 		mux_memoryAdress_updated, mux_memoryAdress_free,			//
 		clockedMemory_updated, clockedMemory_free, 					//
 		MDR_updated, MDR_free,										//
@@ -56,7 +57,7 @@ pthread_t uc_handle, memory_handle, clockedMemory_handle,
 		instructionRegister_handle, mux_memoryAdress_handle,
 		mux_WriteRegIR_handle, mux_WriteDataIR_handle, signExtend_handle,
 		shiftLeft2_muxPC_handle, shiftLeft2_muxALUB_handle, mux_ALUA_handle,
-		ALU_handle, mux_ALUB_handle, mux_PC_handle, and_PC_handle, or_pc_handle,
+		ALU_handle, mux_ALUB_handle, mux_PC_handle, ports_PC_handle,
 		registers_handle;
 
 void createAndEnqueueJob(bool isNop) {
@@ -324,6 +325,8 @@ void *shiftLeft2_muxPC(void *thread_id) {
 		sem_wait(&IR_1_updated);
 		sem_wait(&shiftLeft2_muxPC_free);
 
+		ssl_muxPC_output = (IR&0x03FFFFFF) << 2;
+
 		if (debugMode) {
 			sem_wait(&printSync);
 			cout << PC << ": Shift Left 2 at mux PC has operated" << endl;
@@ -388,8 +391,8 @@ void *mux_ALUB(void *thread_id) {
 	while (1) {
 		sem_wait(&UC_mux_ALUB);
 		sem_wait(&registers_updated_1);
-		sem_wait(&mux_ALUB_free);
 		sem_wait(&shiftLeft2_muxALUB_updated);
+		sem_wait(&mux_ALUB_free);
 
 		if (UC.job.controlSignals.ALUSrcB0 == false
 				&& UC.job.controlSignals.ALUSrcB1 == false) {
@@ -443,6 +446,20 @@ void *ALU(void *thread_id) {
 			}
 		}
 
+		if (UC.job.controlSignals.ALUOp0 == false
+				&& UC.job.controlSignals.ALUOp1 == true) {
+			ALU_output = mux_ALUA_output - mux_ALUB_output;
+
+			if (debugMode) {
+				sem_wait(&printSync);
+				cout << PC << ": ALU is subtracting " << mux_ALUA_output << " and " << mux_ALUB_output << endl;
+				sem_post(&printSync);
+			}
+		}
+
+		if (ALU_output == 0) ALU_zero_output = true;
+		else ALU_zero_output = false;
+
 		sem_post(&ALU_updated);
 		sem_post(&mux_ALUA_free);
 		sem_post(&mux_ALUB_free);
@@ -453,22 +470,25 @@ void *ALU(void *thread_id) {
 
 void *mux_PC(void *thread_id) {
 	while (1) {
-		sem_post(&UC_mux_PC);
+		sem_wait(&UC_mux_PC);
+		sem_wait(&mux_PC_free);
 		sem_wait(&ALU_updated);
 		sem_wait(&shiftLeft2_muxPC_updated);
-		sem_wait(&PC_free);
-		sem_wait(&PC_free);
+
 
 		if (UC.job.controlSignals.PCSource0 == false
 				&& UC.job.controlSignals.PCSource1 == false) {
-			if (UC.job.controlSignals.PCWrite == true) {
-				PC = ALU_output;
-				if (debugMode) {
-					sem_wait(&printSync);
-					cout << "PC incremented to " << PC << endl;
-					sem_post(&printSync);
-				}
-			}
+			mux_PC_output = ALU_output;
+		}
+
+		if (UC.job.controlSignals.PCSource0 == false
+				&& UC.job.controlSignals.PCSource1 == true) {
+			mux_PC_output = AluOut;
+		}
+
+		if (UC.job.controlSignals.PCSource0 == true
+				&& UC.job.controlSignals.PCSource1 == false) {
+			mux_PC_output = (0x0FFFFFFF&ssl_muxPC_output)|(0xF0000000&PC);
 		}
 
 		if (debugMode) {
@@ -477,34 +497,34 @@ void *mux_PC(void *thread_id) {
 			sem_post(&printSync);
 		}
 
-		sem_post(&PC_updated);
-		sem_post(&PC_updated);
+
 		sem_post(&shiftLeft2_muxPC_free);
 		sem_post(&ALU_free);
-		sem_post(&UC_free);
+		sem_post(&mux_PC_updated);
 	}
 	pthread_exit(0);
 }
 
-void *and_PC(void *thread_id) {
-	/*while(1){
-	 sem_wait(&anterior_updated);
-	 sem_wait(&proprio_free);
+void *ports_PC(void *thread_id) {
+	while(1){
+		sem_wait(&mux_PC_updated);
+		sem_wait(&PC_free);
+		sem_wait(&PC_free);
 
-	 sem_post(&proprio_updated);
-	 sem_post(&anterior_free);
-	 }*/
-	pthread_exit(0);
-}
+		if ((ALU_zero_output && UC.job.controlSignals.PCWriteCond) || UC.job.controlSignals.PCWrite){
+			PC = mux_PC_output;
+			if (debugMode){
+				sem_wait(&printSync);
+				cout << "PC updated to "<< PC << "!! =)"<< endl << endl;
+				sem_post(&printSync);
+			}
+		}
 
-void *or_PC(void *thread_id) {
-	/*while(1){
-	 sem_wait(&anterior_updated);
-	 sem_wait(&proprio_free);
-
-	 sem_post(&proprio_updated);
-	 sem_post(&anterior_free);
-	 }*/
+		sem_post(&PC_updated);
+		sem_post(&PC_updated);
+		sem_post(&mux_PC_free);
+		sem_post(&UC_free);
+	 }
 	pthread_exit(0);
 }
 
@@ -520,6 +540,7 @@ void semaphores_init() {
 	sem_init(&UC_mux_ALUA, 0, 0);
 	sem_init(&UC_mux_ALUB, 0, 0);
 	sem_init(&UC_mux_PC, 0, 0);
+	sem_init(&invalid_opcode, 0, 0);
 
 	sem_init(&PC_updated, 0, 0);
 	sem_init(&PC_free, 0, 0);
@@ -580,9 +601,6 @@ void semaphores_init() {
 
 void resourcesInit() {
 	semaphores_init();
-
-//	sem_init(&instructions_updated, 0, 0);
-//	sem_init(&instructions_free, 0, CYCLES_COUNT);
 
 	if (pthread_create(&memory_handle, 0, memory_load, NULL) != 0) {
 		cout << THREAD_INIT_FAIL("Memory Load");
@@ -646,12 +664,8 @@ void resourcesInit() {
 		cout << THREAD_INIT_FAIL("MuxPC");
 		exit(0);
 	}
-	if (pthread_create(&and_PC_handle, 0, and_PC, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("AND PC");
-		exit(0);
-	}
-	if (pthread_create(&or_pc_handle, 0, or_PC, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("OR PC");
+	if (pthread_create(&ports_PC_handle, 0, ports_PC, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("AND and OR for PC");
 		exit(0);
 	}
 }
