@@ -70,15 +70,15 @@ void setControlSignals(SyncedInstruction *job, int cycle){
 		buffer |= ativa_IorD;
 	}
 	else if (cycle == 6){
-		buffer &= ativa_ALUSrcA;
+		buffer |= ativa_ALUSrcA;
 		buffer &= desativa_ALUSrcB0;
 		buffer &= desativa_ALUSrcB1;
-		buffer &= ativa_ALUOp0;
+		buffer |= ativa_ALUOp0;
 		buffer &= desativa_ALUOp1;
 	}
 	else if (cycle == 7){
-		buffer &= ativa_RegWrite;
-		buffer &= ativa_RegDst;
+		buffer |= ativa_RegWrite;
+		buffer |= ativa_RegDst;
 		buffer &= desativa_MemtoReg;
 	}
 	else if (cycle == 8){

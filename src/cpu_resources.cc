@@ -6,12 +6,11 @@
  */
 
 #include "cpu_resources.h"
-#include <iomanip>
 
 using namespace std;
 
 FILE *bincode;
-int *memoryBank;
+int *memoryBank, memorySize;
 int registersBank[32];
 
 int PC, MDR, IR, A, B, AluOut;
@@ -77,7 +76,9 @@ void *memory_load(void *thread_id) {
 		exit(0);
 	}
 
-	memoryBank = (int *) malloc(sizeof(int) * (size + 128));
+	memorySize = size + 128;
+	memoryBank = (int *) malloc(sizeof(int) * (memorySize));
+
 	int buffer;
 	char readChar;
 
@@ -111,6 +112,9 @@ void *memory_load(void *thread_id) {
 		registersBank[i] = i;
 	}
 
+	for (int i = size; i < memorySize; i++){
+		memoryBank[i] = 0;
+	}
 
 	/*Execution init*/
 	PC = 0;
@@ -135,7 +139,7 @@ void *mux_memoryAdress(void *thread_id) {
 		sem_wait(&PC_updated);
 
 		if (UC.job.controlSignals.IorD == false) {
-			mux_memoryAdress_output = PC;
+			mux_memoryAdress_output = PC / 4;
 			if (debugMode) {
 				sem_wait(&printSync);
 				cout << PC << ": Mux to Memory Address has received PC as " << mux_memoryAdress_output << endl;
@@ -199,6 +203,7 @@ void *instructionRegister(void *thread_id) {
 		if (debugMode) {
 			sem_wait(&printSync);
 			cout << PC << ": IR has received Memory Data" << endl;
+			cout << PC << ":     resulting in " << hex << IR << dec << endl;
 			sem_post(&printSync);
 		}
 
@@ -229,6 +234,10 @@ void *mux_WriteRegIR(void *thread_id) {
 			mux_writeReg_output = (int) ((IR & separa_rt) >> 16);
 		}
 
+		else if (UC.job.controlSignals.RegDst == true){
+			mux_writeReg_output = (int) ((IR & separa_rd) >> 11);
+		}
+
 		if (debugMode) {
 			sem_wait(&printSync);
 			cout << PC << ": Mux Write to Register received the bits from IR"
@@ -248,9 +257,14 @@ void *mux_WriteDataIR(void *thread_id) {
 		sem_wait(&MDR_updated);
 		sem_wait(&mux_WriteDataIR_free);
 
+		if (UC.job.controlSignals.MemToReg == false){
+			mux_writeData_output = AluOut;
+		}
+
 		if (UC.job.controlSignals.MemToReg == true){
 			mux_writeData_output = MDR;
 		}
+
 		if (debugMode) {
 			sem_wait(&printSync);
 			cout << PC << ": Mux Write Data received data from MDR" << endl;
@@ -401,7 +415,7 @@ void *mux_ALUB(void *thread_id) {
 
 		if (UC.job.controlSignals.ALUSrcB0 == false
 				&& UC.job.controlSignals.ALUSrcB1 == true) {
-			mux_ALUB_output = 1; // para incrementar o PC em uma instrução, somamos 1 em int (4 bytes)
+			mux_ALUB_output = 4;
 		}
 
 		else if (UC.job.controlSignals.ALUSrcB0 == true
@@ -454,6 +468,27 @@ void *ALU(void *thread_id) {
 				sem_wait(&printSync);
 				cout << PC << ": ALU is subtracting " << mux_ALUA_output << " and " << mux_ALUB_output << endl;
 				sem_post(&printSync);
+			}
+		}
+
+		if (UC.job.controlSignals.ALUOp0 == true
+				&& UC.job.controlSignals.ALUOp1 == false) {
+			switch (IR&0x0000000F) {
+			case 0:
+				ALU_output = mux_ALUA_output + mux_ALUB_output;
+				break;
+			case 2:
+				ALU_output = mux_ALUA_output - mux_ALUB_output;
+				break;
+			case 4:
+				ALU_output = mux_ALUA_output & mux_ALUB_output;
+				break;
+			case 5:
+				ALU_output = mux_ALUA_output | mux_ALUB_output;
+				break;
+			case 10:
+				ALU_output = mux_ALUA_output < mux_ALUB_output ? 1 : 0;
+				break;
 			}
 		}
 
@@ -524,7 +559,7 @@ void *ports_PC(void *thread_id) {
 		sem_post(&PC_updated);
 		sem_post(&mux_PC_free);
 		sem_post(&UC_free);
-	 }
+	}
 	pthread_exit(0);
 }
 

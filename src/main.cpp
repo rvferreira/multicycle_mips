@@ -40,6 +40,7 @@ using namespace std;
 
 
 bool processInput(int argc, char** argv, string& option, string &filename);
+void memoryPrint();
 
 int main(int argc, char** argv) {
     string option   = "";
@@ -74,31 +75,26 @@ int main(int argc, char** argv) {
 			break;
 		}
 		sem_wait(&clock_free);
-		//simulateClockDelay();
+		simulateClockDelay();
 		sem_post(&clock_updated);
 	}
 
 	fflush(0);
-//	pthread_join(memory_handle, 0);
-//	pthread_join(clockedMemory_handle, 0);
-//	pthread_join(instructionRegister_handle, 0);
-//	pthread_join(mux_memoryAdress_handle, 0);
-//	pthread_join(mux_WriteRegIR_handle, 0);
-//	pthread_join(mux_WriteDataIR_handle, 0);
-//	pthread_join(signExtend_handle, 0);
-//	pthread_join(shiftLeft2_muxPC_handle, 0);
-//	pthread_join(shiftLeft2_muxALUB_handle, 0);
-//	pthread_join(mux_ALUA_handle, 0);
-//	pthread_join(ALU_handle, 0);
-//	pthread_join(mux_ALUB_handle, 0);
-//	pthread_join(mux_PC_handle, 0);
-//	pthread_join(ports_PC_handle, 0);
+	memoryPrint();
 
 	fflush(0);
 	printf("\nPress any key to terminate.\n");
 	getchar();
 
     return EXIT_SUCCESS;
+}
+
+void memoryPrint(){
+	std::cout << "Memory Final State:" << std::endl << std::endl;
+		for (int i = 0; i < memorySize; i++)
+			cout << "0x" << setfill('0') << setw(8) << uppercase << hex
+					<< ((memoryBank[i] & 0xFFFFFFFF) >> 0) << dec << endl;
+
 }
 
 

@@ -14,6 +14,7 @@
 #include "control_signals.h"
 #include "commonVariables.h"
 #include <list>
+#include <iomanip>
 
 struct UC_def {
 	SyncedInstruction job;
@@ -39,7 +40,7 @@ extern pthread_t uc_handle, memory_handle, clockedMemory_handle,
 		shiftLeft2_muxPC_handle, shiftLeft2_muxALUB_handle, mux_ALUA_handle,
 		ALU_handle, mux_ALUB_handle, mux_PC_handle, ports_PC_handle;
 
-extern int *memoryBank;
+extern int *memoryBank, memorySize;
 extern int PC, MDR, IR, A, B, AluOut;
 
 void resourcesInit();

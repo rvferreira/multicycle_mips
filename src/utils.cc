@@ -7,6 +7,8 @@
 
 #include "utils.h"
 
+int ALUControl;
+
 bool nodClock = false;
 bool debugMode = false;
 
