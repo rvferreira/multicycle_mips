@@ -19,3 +19,4 @@ int readData2;
 int mux_writeReg_output;
 int mux_writeData_output;
 int mux_PC_output;
+int ALUControl_output;

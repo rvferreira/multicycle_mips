@@ -41,12 +41,14 @@ sem_t clock_free, clock_updated,									//
 		mux_WriteDataIR_updated, mux_WriteDataIR_free,				//
 		registers_updated_0, registers_updated_1,					//
 		registers_free_0, registers_free_1, 						//
-		IR_0_free, IR_0_updated, IR_1_free, IR_1_updated,			//
+		IR_0_free, IR_0_updated, IR_1_free, IR_1_updated,	
+		IR_2_free, IR_2_updated,									//
 		signExtend_updated, signExtend_free,						//
 		shiftLeft2_muxPC_updated, shiftLeft2_muxPC_free,			//
 		shiftLeft2_muxALUB_updated, shiftLeft2_muxALUB_free, 		//
 		mux_ALUA_updated, mux_ALUA_free, 							//
 		mux_ALUB_updated, mux_ALUB_free, 							//
+		ALUControl_updated, ALUControl_free, 						//
 		ALU_updated, ALU_free, 										//
 		mux_PC_updated, mux_PC_free;								//
 
@@ -56,7 +58,7 @@ pthread_t uc_handle, memory_handle, clockedMemory_handle,
 		instructionRegister_handle, mux_memoryAdress_handle,
 		mux_WriteRegIR_handle, mux_WriteDataIR_handle, signExtend_handle,
 		shiftLeft2_muxPC_handle, shiftLeft2_muxALUB_handle, mux_ALUA_handle,
-		ALU_handle, mux_ALUB_handle, mux_PC_handle, ports_PC_handle,
+		ALUControl_handle, ALU_handle, mux_ALUB_handle, mux_PC_handle, ports_PC_handle,
 		registers_handle;
 
 void createAndEnqueueJob(bool isNop) {
@@ -195,6 +197,7 @@ void *instructionRegister(void *thread_id) {
 		sem_wait(&instructionRegister_free);
 		sem_wait(&IR_0_free);
 		sem_wait(&IR_1_free);
+		sem_post(&IR_2_free);
 
 		if (UC.job.controlSignals.IRWrite == true) {
 			IR = memory_output;
@@ -218,6 +221,7 @@ void *instructionRegister(void *thread_id) {
 
 		sem_post(&IR_0_updated);
 		sem_post(&IR_1_updated);
+		sem_post(&IR_2_updated);
 		sem_post(&MDR_updated);
 		sem_post(&clockedMemory_free);
 	}
@@ -443,14 +447,84 @@ void *mux_ALUB(void *thread_id) {
 	pthread_exit(0);
 }
 
+/* thread que representa o controle da ULA */
+void *ALUControl (void *thread_id){
+	
+	while (1){
+		
+		/* esperamos o IR ficar pronto e logo após liberamos o controle da ULA */
+		sem_wait(&IR_2_updated);
+		sem_wait(&ALUControl_free);
+
+		// se ALUOP = 00, então é uma LW / SW 
+		if (UC.job.controlSignals.ALUOp0 == false
+				&& UC.job.controlSignals.ALUOp1 == false) {
+			// código de operação para soma
+			ALUControl_output = 2;
+		}	
+
+		//se ALUOP = 01, então é uma BEQ
+		if (UC.job.controlSignals.ALUOp0 == false
+				&& UC.job.controlSignals.ALUOp1 == true) {
+			// código da operação para subtração
+			ALUControl_output = 6;
+		}
+
+		//se ALUOP = 10, então é uma instrução tipo-R
+		if (UC.job.controlSignals.ALUOp0 == true
+				&& UC.job.controlSignals.ALUOp1 == false) {
+
+			// isolando os 4 últimos bits para descobrir que operação do tipo-R signfica
+			switch (IR&0x0000000F){
+				
+				//se for 0 é uma ADD
+				case 0:{
+					// código da operação para soma
+					ALUControl_output = 2;
+					break;
+				}				
+				//se for 2 é uma SUB
+				case 2:{
+					// código da operação para subtração
+					ALUControl_output = 6;
+					break;
+				}				
+				// se for 4 é uma AND	
+				case 4:{
+					// código de operação para and
+					ALUControl_output = 0;
+					break;
+				}				
+				// se for 5 é uma OR 	
+				case 5:{
+					// código de operação para OR
+					ALUControl_output = 1;
+					break;	
+				}
+				// se for 10 é uma SLT	
+				case 10:
+					// código de operação para SLT
+					ALUControl_output = 7;
+					break;	
+			}
+		}
+
+		sem_post(&ALUControl_updated);
+		sem_post(&IR_2_free);
+	}
+	pthread_exit(0);
+}
+
+
 void *ALU(void *thread_id) {
 	while (1) {
 		sem_wait(&mux_ALUA_updated);
 		sem_wait(&mux_ALUB_updated);
+		sem_wait(&ALUControl_updated);
 		sem_wait(&ALU_free);
 
-		if (UC.job.controlSignals.ALUOp0 == false
-				&& UC.job.controlSignals.ALUOp1 == false) {
+		// se o código de operação for 2 é uma soma
+		if (ALUControl_output == 2) {
 			ALU_output = mux_ALUA_output + mux_ALUB_output;
 
 			if (debugMode) {
@@ -460,8 +534,8 @@ void *ALU(void *thread_id) {
 			}
 		}
 
-		if (UC.job.controlSignals.ALUOp0 == false
-				&& UC.job.controlSignals.ALUOp1 == true) {
+		//se o código de operação for 6 é uma subtração
+		if (ALUControl_output == 6) {
 			ALU_output = mux_ALUA_output - mux_ALUB_output;
 
 			if (debugMode) {
@@ -471,24 +545,33 @@ void *ALU(void *thread_id) {
 			}
 		}
 
-		if (UC.job.controlSignals.ALUOp0 == true
-				&& UC.job.controlSignals.ALUOp1 == false) {
-			switch (IR&0x0000000F) {
-			case 0:
-				ALU_output = mux_ALUA_output + mux_ALUB_output;
-				break;
-			case 2:
-				ALU_output = mux_ALUA_output - mux_ALUB_output;
-				break;
-			case 4:
-				ALU_output = mux_ALUA_output & mux_ALUB_output;
-				break;
-			case 5:
-				ALU_output = mux_ALUA_output | mux_ALUB_output;
-				break;
-			case 10:
-				ALU_output = mux_ALUA_output < mux_ALUB_output ? 1 : 0;
-				break;
+		// se o código de operação for 0 é um AND
+		if (ALUControl_output == 0) {
+			ALU_output = mux_ALUA_output & mux_ALUB_output;
+			if (debugMode) {
+				sem_wait(&printSync);
+				cout << PC << ": ALU is operating logical AND " << mux_ALUA_output << " and " << mux_ALUB_output << endl;
+				sem_post(&printSync);
+			}
+		}
+
+		// se o código de operação for 1 é um OR
+		if (ALUControl_output == 1) {
+			ALU_output = mux_ALUA_output | mux_ALUB_output;
+			if (debugMode) {
+				sem_wait(&printSync);
+				cout << PC << ": ALU is operating logical OR " << mux_ALUA_output << " and " << mux_ALUB_output << endl;
+				sem_post(&printSync);
+			}
+		}
+
+		// se o código de operação for 7 é um SLT
+		if (ALUControl_output == 7) {
+			ALU_output =  mux_ALUA_output < mux_ALUB_output ? 1 : 0;
+			if (debugMode) {
+				sem_wait(&printSync);
+				cout << PC << ": ALU is operating logical SLT " << mux_ALUA_output << " and " << mux_ALUB_output << endl;
+				sem_post(&printSync);
 			}
 		}
 
@@ -496,6 +579,7 @@ void *ALU(void *thread_id) {
 		else ALU_zero_output = false;
 
 		sem_post(&ALU_updated);
+		sem_post(&ALUControl_free);
 		sem_post(&mux_ALUA_free);
 		sem_post(&mux_ALUB_free);
 
@@ -604,6 +688,9 @@ void semaphores_init() {
 	sem_init(&IR_1_free, 0, 1);
 	sem_init(&IR_1_updated, 0, 0);
 
+	sem_init(&IR_2_free, 0, 1);
+	sem_init(&IR_2_updated, 0, 0);
+
 	sem_init(&registers_updated_0, 0, 0);
 	sem_init(&registers_updated_1, 0, 0);
 
@@ -624,6 +711,9 @@ void semaphores_init() {
 
 	sem_init(&mux_ALUB_updated, 0, 0);
 	sem_init(&mux_ALUB_free, 0, 1);
+
+	sem_init(&ALUControl_updated, 0, 0);
+	sem_init(&ALUControl_free, 0, 1);
 
 	sem_init(&ALU_updated, 0, 0);
 	sem_init(&ALU_free, 0, 1);
@@ -685,6 +775,10 @@ void resourcesInit() {
 	}
 	if (pthread_create(&mux_ALUA_handle, 0, mux_ALUA, NULL) != 0) {
 		cout << THREAD_INIT_FAIL("MuxALUA");
+		exit(0);
+	}
+	if (pthread_create(&ALUControl_handle, 0, ALUControl, NULL) != 0) {
+		cout << THREAD_INIT_FAIL("ALUControl");
 		exit(0);
 	}
 	if (pthread_create(&ALU_handle, 0, ALU, NULL) != 0) {

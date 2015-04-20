@@ -22,6 +22,6 @@ extern int readData2;
 extern int mux_writeReg_output;
 extern int mux_writeData_output;
 extern int mux_PC_output;
-
+extern int ALUControl_output;
 
 #endif /* COMMONVARIABLES_H_ */

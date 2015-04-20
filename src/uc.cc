@@ -11,8 +11,9 @@ using namespace std;
 
 UC_def UC;
 
+//Tabela de Despacho para o ciclo 1
 int dispatchTable() {
-	//Tabela de Despacho para o ciclo 1
+	
 	int cycle;
 	switch (IR&separa_cop) {
 		// instruction type-r
@@ -49,8 +50,9 @@ int dispatchTable() {
 	return cycle;
 }
 
+//Tabela de Despacho para o ciclo 2
 int dispatchTable2() {
-	//Tabela de Despacho para o ciclo 2
+	
 	int cycle;
 	switch (IR&separa_cop){
 		
