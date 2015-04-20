@@ -1,9 +1,16 @@
-/*
- * cpu_resources.cc
+/*	 **************************************************************************** /
+ *	Trabalho de Sistemas Operacionais I - CPU MIPS Multiciclo com PThreads 
  *
- *  Created on: Apr 3, 2015
- *      Author: rferreira
- */
+ * Grupo 2
+ *
+ * Integrantes 						
+ *		Andressa Andrião 			
+ *		Jéssika Darambaris			
+ *		Raphael Ferreira
+ *
+ * Professor 
+ *		Paulo Sérgio Souza	
+ ******************************************************************************* */
 
 #include "control_signals.h"
 

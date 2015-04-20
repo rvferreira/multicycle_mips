@@ -1,9 +1,17 @@
-/*
- * control_signals.h
+/*	 **************************************************************************** /
+ *	Trabalho de Sistemas Operacionais I - CPU MIPS Multiciclo com PThreads 
  *
- *  Created on: Apr 3, 2015
- *      Author: rferreira
- */
+ * Grupo 2
+ *
+ * Integrantes 						
+ *		Andressa Andrião 			
+ *		Jéssika Darambaris			
+ *		Raphael Ferreira
+ *
+ * Professor 
+ *		Paulo Sérgio Souza	
+ ******************************************************************************* */
+
 
 #ifndef CONTROL_SIGNALS_H_
 #define CONTROL_SIGNALS_H_

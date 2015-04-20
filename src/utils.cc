@@ -1,9 +1,17 @@
-/*
- * utils.cc
+/*	 **************************************************************************** /
+ *	Trabalho de Sistemas Operacionais I - CPU MIPS Multiciclo com PThreads 
  *
- *  Created on: Mar 30, 2015
- *      Author: rferreira
- */
+ * Grupo 2
+ *
+ * Integrantes 						
+ *		Andressa Andrião 			
+ *		Jéssika Darambaris			
+ *		Raphael Ferreira
+ *
+ * Professor 
+ *		Paulo Sérgio Souza	
+ ******************************************************************************* */
+ 
 
 #include "utils.h"
 

@@ -1,10 +1,17 @@
-/*
- * uc.h
+/*	 **************************************************************************** /
+ *	Trabalho de Sistemas Operacionais I - CPU MIPS Multiciclo com PThreads 
  *
- *  Created on: Apr 11, 2015
- *      Author: rferreira
- */
-
+ * Grupo 2
+ *
+ * Integrantes 						
+ *		Andressa Andrião 			
+ *		Jéssika Darambaris			
+ *		Raphael Ferreira
+ *
+ * Professor 
+ *		Paulo Sérgio Souza	
+ ******************************************************************************* */
+ 
 #ifndef UC_H_
 #define UC_H_
 

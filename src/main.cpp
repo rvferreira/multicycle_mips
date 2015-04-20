@@ -1,12 +1,17 @@
-//============================================================================
-// Name        : multicycle_mips.cpp
-// Author      : Raphael Ferreira
-//				 Andressa Andriao
-//				 Jessika Darambaris
-// Version     : 1.0
-// Copyright   : Open-bar for learning purposes
-// Description : Multicycle CPU Mips processor
-//============================================================================
+/*   **************************************************************************** /
+ *  Trabalho de Sistemas Operacionais I - CPU MIPS Multiciclo com PThreads 
+ *
+ * Grupo 2
+ *
+ * Integrantes                      
+ *      Andressa Andrião            
+ *      Jéssika Darambaris          
+ *      Raphael Ferreira
+ *
+ * Professor 
+ *      Paulo Sérgio Souza  
+ ******************************************************************************* */
+
 
 #include <set>
 #include <map>
