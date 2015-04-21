@@ -14,7 +14,6 @@
 
 #include "cpu_resources.h"
 
-using namespace std;
 
 FILE *bincode;
 int *memoryBank, memorySize;
@@ -68,8 +67,8 @@ pthread_t uc_handle, memory_handle, clockedMemory_handle,
 		ALUControl_handle, ALU_handle, mux_ALUB_handle, mux_PC_handle, ports_PC_handle,
 		registers_handle;
 
-void createAndEnqueueJob(bool isNop) {
-	SyncedInstruction *newJob = new SyncedInstruction;
+void createAndEnqueueJob(int isNop) {
+	SyncedInstruction *newJob;
 	setControlSignals(newJob, 0);
 }
 
@@ -77,11 +76,12 @@ void *memory_load(void *thread_id) {
 	/*memory load*/
 	fseek(bincode, 0, SEEK_END);
 	int size = (ftell(bincode) - 1) / 8;
-	cout << SEPARATOR << "We have found " << size << " lines of code." << endl
-			<< SEPARATOR;
+	printf("%s We have found %d lines of code.  \n %s \n",SEPARATOR,size,SEPARATOR);
+			
 	rewind(bincode);
+	
 	if (!size) {
-		cout << "Oops, there's nothing to be executed." << endl;
+		printf("Oops, there's nothing to be executed. \n");
 		exit(0);
 	}
 
@@ -91,12 +91,13 @@ void *memory_load(void *thread_id) {
 	int buffer;
 	char readChar;
 
-	std::cout << "Memory Initial State:" << std::endl << std::endl;
-	for (int i = 0; i < size; i++) {
+	printf("Memory Initial State: \n\n");
+	int i;
+	for (i = 0; i < size; i++) {
 
 		buffer = 0x00000000;
-
-		for (int j = 0; j < 8; j++) {
+		int j;	
+		for (j = 0; j < 8; j++) {
 			readChar = (char) fgetc(bincode);
 			if (readChar == '\n') {
 				j--;
@@ -107,28 +108,27 @@ void *memory_load(void *thread_id) {
 		}
 
 		memoryBank[i] = buffer;
-		cout << "0x";
-		cout << setfill('0') << setw(8) << uppercase << hex
-				<< ((memoryBank[i] & 0xFFFFFFFF) >> 0);
-		cout << dec;
-		cout << endl;
+		printf(" %#.8x \n",((memoryBank[i] & 0xFFFFFFFF) >> 0));
 	}
-	std::cout << SEPARATOR;
+
+	
+	printf(SEPARATOR);
 	fclose(bincode);
 
 	/* registers load */
-	for (int i = 0; i < 32; i++){
+	
+	for (i = 0; i < 32; i++){
 		registersBank[i] = i;
 	}
 
-	for (int i = size; i < memorySize; i++){
+	for (i = size; i < memorySize; i++){
 		memoryBank[i] = 0;
 	}
 
 	/*Execution init*/
 	PC = 0;
 	if (debugMode)
-		cout << "PC has been initiated" << endl;
+		printf("PC has been initiated \n");
 	sem_post(&PC_updated);
 	sem_post(&PC_updated);
 	pthread_exit(0);
@@ -147,20 +147,21 @@ void *mux_memoryAdress(void *thread_id) {
 		sem_wait(&mux_memoryAdress_free);
 		sem_wait(&PC_updated);
 
-		if (UC.job.controlSignals.IorD == false) {
+
+		if (!UC.job.controlSignals.IorD) {
 			mux_memoryAdress_output = PC / 4;
 			if (debugMode) {
 				sem_wait(&printSync);
-				cout << PC << ": Mux to Memory Address has received PC as " << mux_memoryAdress_output << endl;
+				printf("%d : Mux to Memory Address has received PC as %d \n",PC,mux_memoryAdress_output);
 				sem_post(&printSync);
 			}
 		}
 
-		else if (UC.job.controlSignals.IorD == true) {
+		else if (UC.job.controlSignals.IorD) {
 			mux_memoryAdress_output = AluOut;
 			if (debugMode) {
 				sem_wait(&printSync);
-				cout << PC << ": Mux to Memory Address has received AluOut as " << mux_memoryAdress_output << endl;
+				printf("%d: Mux to Memory Address has received AluOut as %d \n",PC,mux_memoryAdress_output);
 				sem_post(&printSync);
 			}
 		}
@@ -176,18 +177,16 @@ void *clockedMemoryAccess(void *thread_id) {
 		sem_wait(&mux_memoryAdress_updated);
 		sem_wait(&clockedMemory_free);
 
-		if (UC.job.controlSignals.MemRead == true) {
+		if (UC.job.controlSignals.MemRead == 1) {
 			memory_output = memoryBank[mux_memoryAdress_output];
 		}
-		if (UC.job.controlSignals.MemWrite == true) {
+		if (UC.job.controlSignals.MemWrite == 1) {
 			memoryBank[mux_memoryAdress_output] = B;
 		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			cout << PC
-					<< ": Memory is accessing the Address " << mux_memoryAdress_output << " received from Mux to Memory Address"
-					<< endl;
+			printf("%d : Memory is accessing the Address %d received from Mux to Memory Address \n",PC, mux_memoryAdress_output);
 			sem_post(&printSync);
 		}
 
@@ -206,14 +205,14 @@ void *instructionRegister(void *thread_id) {
 		sem_wait(&IR_1_free);
 		sem_post(&IR_2_free);
 
-		if (UC.job.controlSignals.IRWrite == true) {
+		if (UC.job.controlSignals.IRWrite == 1) {
 			IR = memory_output;
 		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			cout << PC << ": IR has received Memory Data" << endl;
-			cout << PC << ":     resulting in " << hex << IR << dec << endl;
+			printf("%d: IR has received Memory Data \n",PC); 
+			printf("%d: resulting in %#.8x \n",PC,IR); 
 			sem_post(&printSync);
 		}
 
@@ -222,7 +221,7 @@ void *instructionRegister(void *thread_id) {
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			cout << PC << ": MDR has received Memory Data" << endl;
+			printf("%d: MDR has received Memory Data \n",PC);
 			sem_post(&printSync);
 		}
 
@@ -241,18 +240,17 @@ void *mux_WriteRegIR(void *thread_id) {
 		sem_wait(&instructionRegister_updated);
 		sem_wait(&mux_WriteRegIR_free);
 
-		if (UC.job.controlSignals.RegDst == false){
+		if (UC.job.controlSignals.RegDst == 0){
 			mux_writeReg_output = (int) ((IR & separa_rt) >> 16);
 		}
 
-		else if (UC.job.controlSignals.RegDst == true){
+		else if (UC.job.controlSignals.RegDst == 1){
 			mux_writeReg_output = (int) ((IR & separa_rd) >> 11);
 		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			cout << PC << ": Mux Write to Register received the bits from IR"
-					<< endl;
+			printf("%d: Mux Write to Register received the bits from IR \n",PC);
 			sem_post(&printSync);
 		}
 
@@ -268,17 +266,17 @@ void *mux_WriteDataIR(void *thread_id) {
 		sem_wait(&MDR_updated);
 		sem_wait(&mux_WriteDataIR_free);
 
-		if (UC.job.controlSignals.MemToReg == false){
+		if (UC.job.controlSignals.MemToReg == 0){
 			mux_writeData_output = AluOut;
 		}
 
-		if (UC.job.controlSignals.MemToReg == true){
+		if (UC.job.controlSignals.MemToReg == 1){
 			mux_writeData_output = MDR;
 		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			cout << PC << ": Mux Write Data received data from MDR" << endl;
+			printf("%d: Mux Write Data received data from MDR\n",PC);
 			sem_post(&printSync);
 		}
 
@@ -298,20 +296,20 @@ void *registers(void *thread_id) {
 		readData1 = registersBank[(int) ((IR & separa_rs) >> 21)];
 		readData2 = registersBank[(int) ((IR & separa_rt) >> 16)];
 
-		if (UC.job.controlSignals.RegWrite == true){
+		if (UC.job.controlSignals.RegWrite == 1){
 			registersBank[mux_writeReg_output] = mux_writeData_output;
 			if (debugMode) {
 				sem_wait(&printSync);
-				cout << "    Word " <<  mux_writeData_output << " wrote on register " << mux_writeReg_output << endl;
+				printf("    Word  %d wrote on register %d \n",mux_writeData_output,mux_writeReg_output);
 				sem_post(&printSync);
 			}
 		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			cout << PC << ": Registers Bank being accessed" << endl;
-			cout << "    A has received " << A << endl;
-			cout << "    B has received " << B << endl;
+			printf("%d: Registers Bank being accessed \n",PC);
+			printf("     A has received %d \n", A);
+			printf("     B has received %d \n", B);
 			sem_post(&printSync);
 		}
 
@@ -334,8 +332,8 @@ void *signExtend(void *thread_id) {
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			cout << PC << ": Sign Extend has operated" << endl;
-			cout << "    resulting in " << hex << signExtend_output << dec << endl;
+			printf("%d: Sign Extend has operated \n", PC);
+			printf("    resulting in %#.8x \n", signExtend_output);
 			sem_post(&printSync);
 		}
 
@@ -354,7 +352,7 @@ void *shiftLeft2_muxPC(void *thread_id) {
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			cout << PC << ": Shift Left 2 at mux PC has operated" << endl;
+			printf("%d: Shift Left 2 at mux PC has operated \n", PC);
 			sem_post(&printSync);
 		}
 
@@ -373,7 +371,7 @@ void *shiftLeft2_muxALUB(void *thread_id) {
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			cout << PC << ": Shift Left 2 at mux ALUB has operated" << endl;
+			printf("%d: Shift Left 2 at mux ALUB has operated \n", PC);
 			sem_post(&printSync);
 		}
 
@@ -390,18 +388,16 @@ void *mux_ALUA(void *thread_id) {
 		sem_wait(&PC_updated);
 		sem_wait(&registers_updated_0);
 
-		if (UC.job.controlSignals.ALUSrcA == false) {
+		if (UC.job.controlSignals.ALUSrcA == 0) {
 			mux_ALUA_output = PC;
 		}
-		else if (UC.job.controlSignals.ALUSrcA == true) {
+		else if (UC.job.controlSignals.ALUSrcA == 1) {
 			mux_ALUA_output = A;
 		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			cout << PC
-					<< ": Buffer A from ALU has received the data from the Registers"
-					<< endl;
+			printf("%d: Buffer A from ALU has received the data from the Registers \n", PC);
 			sem_post(&printSync);
 		}
 
@@ -419,31 +415,29 @@ void *mux_ALUB(void *thread_id) {
 		sem_wait(&shiftLeft2_muxALUB_updated);
 		sem_wait(&mux_ALUB_free);
 
-		if (UC.job.controlSignals.ALUSrcB0 == false
-				&& UC.job.controlSignals.ALUSrcB1 == false) {
+		if (UC.job.controlSignals.ALUSrcB0 == 0
+				&& UC.job.controlSignals.ALUSrcB1 == 0) {
 			mux_ALUB_output = B;
 		}
 
-		if (UC.job.controlSignals.ALUSrcB0 == false
-				&& UC.job.controlSignals.ALUSrcB1 == true) {
+		if (UC.job.controlSignals.ALUSrcB0 == 0
+				&& UC.job.controlSignals.ALUSrcB1 == 1) {
 			mux_ALUB_output = 4;
 		}
 
-		else if (UC.job.controlSignals.ALUSrcB0 == true
-				&& UC.job.controlSignals.ALUSrcB1 == false) {
+		else if (UC.job.controlSignals.ALUSrcB0 == 1
+				&& UC.job.controlSignals.ALUSrcB1 == 0) {
 			mux_ALUB_output = signExtend_output;
 		}
 
-		else if (UC.job.controlSignals.ALUSrcB0 == true
-				&& UC.job.controlSignals.ALUSrcB1 == true) {
+		else if (UC.job.controlSignals.ALUSrcB0 == 1
+				&& UC.job.controlSignals.ALUSrcB1 == 1) {
 			mux_ALUB_output = ssl_ALUB_output;
 		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			cout << PC
-					<< ": Buffer B from ALU has received the data from the Registers"
-					<< endl;
+			printf("%d: Buffer B from ALU has received the data from the Registers \n", PC);
 			sem_post(&printSync);
 		}
 
@@ -464,22 +458,22 @@ void *ALUControl (void *thread_id){
 		sem_wait(&ALUControl_free);
 
 		// se ALUOP = 00, então é uma LW / SW 
-		if (UC.job.controlSignals.ALUOp0 == false
-				&& UC.job.controlSignals.ALUOp1 == false) {
+		if (UC.job.controlSignals.ALUOp0 == 0
+				&& UC.job.controlSignals.ALUOp1 == 0) {
 			// código de operação para soma
 			ALUControl_output = 2;
 		}	
 
 		//se ALUOP = 01, então é uma BEQ
-		if (UC.job.controlSignals.ALUOp0 == false
-				&& UC.job.controlSignals.ALUOp1 == true) {
+		if (UC.job.controlSignals.ALUOp0 == 0
+				&& UC.job.controlSignals.ALUOp1 == 1) {
 			// código da operação para subtração
 			ALUControl_output = 6;
 		}
 
 		//se ALUOP = 10, então é uma instrução tipo-R
-		if (UC.job.controlSignals.ALUOp0 == true
-				&& UC.job.controlSignals.ALUOp1 == false) {
+		if (UC.job.controlSignals.ALUOp0 == 1
+				&& UC.job.controlSignals.ALUOp1 == 0) {
 
 			// isolando os 4 últimos bits para descobrir que operação do tipo-R signfica
 			switch (IR&0x0000000F){
@@ -536,7 +530,7 @@ void *ALU(void *thread_id) {
 
 			if (debugMode) {
 				sem_wait(&printSync);
-				cout << PC << ": ALU is summing up " << mux_ALUA_output << " and " << mux_ALUB_output << endl;
+				printf("%d: ALU is summing up %d and %d \n", PC, mux_ALUA_output,mux_ALUB_output);
 				sem_post(&printSync);
 			}
 		}
@@ -547,7 +541,7 @@ void *ALU(void *thread_id) {
 
 			if (debugMode) {
 				sem_wait(&printSync);
-				cout << PC << ": ALU is subtracting " << mux_ALUA_output << " and " << mux_ALUB_output << endl;
+				printf("%d: ALU is subtracting up %d and %d \n", PC, mux_ALUA_output,mux_ALUB_output);
 				sem_post(&printSync);
 			}
 		}
@@ -557,7 +551,7 @@ void *ALU(void *thread_id) {
 			ALU_output = mux_ALUA_output & mux_ALUB_output;
 			if (debugMode) {
 				sem_wait(&printSync);
-				cout << PC << ": ALU is operating logical AND " << mux_ALUA_output << " and " << mux_ALUB_output << endl;
+				printf("%d: ALU is operating logical AND %d and %d \n", PC, mux_ALUA_output,mux_ALUB_output);
 				sem_post(&printSync);
 			}
 		}
@@ -567,7 +561,7 @@ void *ALU(void *thread_id) {
 			ALU_output = mux_ALUA_output | mux_ALUB_output;
 			if (debugMode) {
 				sem_wait(&printSync);
-				cout << PC << ": ALU is operating logical OR " << mux_ALUA_output << " and " << mux_ALUB_output << endl;
+				printf("%d: ALU is operating logical OR %d and %d \n", PC, mux_ALUA_output,mux_ALUB_output);
 				sem_post(&printSync);
 			}
 		}
@@ -577,13 +571,13 @@ void *ALU(void *thread_id) {
 			ALU_output =  mux_ALUA_output < mux_ALUB_output ? 1 : 0;
 			if (debugMode) {
 				sem_wait(&printSync);
-				cout << PC << ": ALU is operating logical SLT " << mux_ALUA_output << " and " << mux_ALUB_output << endl;
+				printf("%d: ALU is operating logical SLT %d and %d \n", PC, mux_ALUA_output,mux_ALUB_output);
 				sem_post(&printSync);
 			}
 		}
 
-		if (ALU_output == 0) ALU_zero_output = true;
-		else ALU_zero_output = false;
+		if (ALU_output == 0) ALU_zero_output = 1;
+		else ALU_zero_output = 0;
 
 		sem_post(&ALU_updated);
 		sem_post(&ALUControl_free);
@@ -602,24 +596,24 @@ void *mux_PC(void *thread_id) {
 		sem_wait(&shiftLeft2_muxPC_updated);
 
 
-		if (UC.job.controlSignals.PCSource0 == false
-				&& UC.job.controlSignals.PCSource1 == false) {
+		if (UC.job.controlSignals.PCSource0 == 0
+				&& UC.job.controlSignals.PCSource1 == 0) {
 			mux_PC_output = ALU_output;
 		}
 
-		if (UC.job.controlSignals.PCSource0 == false
-				&& UC.job.controlSignals.PCSource1 == true) {
+		if (UC.job.controlSignals.PCSource0 == 0
+				&& UC.job.controlSignals.PCSource1 == 1) {
 			mux_PC_output = AluOut;
 		}
 
-		if (UC.job.controlSignals.PCSource0 == true
-				&& UC.job.controlSignals.PCSource1 == false) {
+		if (UC.job.controlSignals.PCSource0 == 1
+				&& UC.job.controlSignals.PCSource1 == 0) {
 			mux_PC_output = (0x0FFFFFFF&ssl_muxPC_output)|(0xF0000000&PC);
 		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			cout << "Cycle finished!" << endl << endl;
+			printf("Cycle finished!\n\n");
 			sem_post(&printSync);
 		}
 
@@ -641,7 +635,7 @@ void *ports_PC(void *thread_id) {
 			PC = mux_PC_output;
 			if (debugMode){
 				sem_wait(&printSync);
-				cout << "PC updated to "<< PC << "!! =)"<< endl << endl;
+				printf("PC updated to %d !! =) \n\n", PC);
 				sem_post(&printSync);
 			}
 		}
@@ -735,73 +729,74 @@ void resourcesInit() {
 	semaphores_init();
 
 	if (pthread_create(&memory_handle, 0, memory_load, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("Memory Load");
+		printf(THREAD_INIT_FAIL("Memory Load"));
 		exit(0);
 	}
 	if (pthread_create(&clockedMemory_handle, 0, clockedMemoryAccess, NULL)
 			!= 0) {
-		cout << THREAD_INIT_FAIL("Clocked Memory");
+		printf(THREAD_INIT_FAIL("Clocked Memory"));
 		exit(0);
 	}
 	if (pthread_create(&instructionRegister_handle, 0, instructionRegister,
 	NULL) != 0) {
-		cout << THREAD_INIT_FAIL("Instruction Register");
+		printf(THREAD_INIT_FAIL("Instruction Register"));
 		exit(0);
 	}
 	if (pthread_create(&mux_memoryAdress_handle, 0, mux_memoryAdress, NULL)
 			!= 0) {
-		cout << THREAD_INIT_FAIL("MuxMemoryAddress");
+		printf(THREAD_INIT_FAIL("MuxMemoryAddress"));
 		exit(0);
 	}
 	if (pthread_create(&mux_WriteRegIR_handle, 0, mux_WriteRegIR, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("MuxWriteRegIR");
+		printf(THREAD_INIT_FAIL("MuxWriteRegIR"));
 		exit(0);
 	}
 	if (pthread_create(&mux_WriteDataIR_handle, 0, mux_WriteDataIR, NULL)
 			!= 0) {
-		cout << THREAD_INIT_FAIL("MuxWriteDataIR");
+		printf(THREAD_INIT_FAIL("MuxWriteDataIR"));
 		exit(0);
 	}
 	if (pthread_create(&signExtend_handle, 0, signExtend, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("MuxSign Extend");
+		printf(THREAD_INIT_FAIL("MuxSign Extend"));
 		exit(0);
 	}
 	if (pthread_create(&shiftLeft2_muxPC_handle, 0, shiftLeft2_muxPC, NULL)
 			!= 0) {
-		cout << THREAD_INIT_FAIL("Shiftleft2 at Mux PC");
+		printf(THREAD_INIT_FAIL("Shiftleft2 at Mux PC"));
 		exit(0);
 	}
 	if (pthread_create(&shiftLeft2_muxPC_handle, 0, shiftLeft2_muxALUB, NULL)
 			!= 0) {
-		cout << THREAD_INIT_FAIL("Shiftleft2 at Mux ALUB");
+		printf(THREAD_INIT_FAIL("Shiftleft2 at Mux ALUB"));
 		exit(0);
 	}
 	if (pthread_create(&registers_handle, 0, registers, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("Registers");
+		printf(THREAD_INIT_FAIL("Registers"));
 		exit(0);
 	}
 	if (pthread_create(&mux_ALUA_handle, 0, mux_ALUA, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("MuxALUA");
+		printf(THREAD_INIT_FAIL("MuxALUA"));
 		exit(0);
 	}
 	if (pthread_create(&ALUControl_handle, 0, ALUControl, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("ALUControl");
+		printf(THREAD_INIT_FAIL("ALUControl"));
 		exit(0);
 	}
 	if (pthread_create(&ALU_handle, 0, ALU, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("ALU");
+		printf(THREAD_INIT_FAIL("ALU"));
 		exit(0);
 	}
 	if (pthread_create(&mux_ALUB_handle, 0, mux_ALUB, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("MuxALUB");
+		printf(THREAD_INIT_FAIL("MuxALUB"));
 		exit(0);
 	}
 	if (pthread_create(&mux_PC_handle, 0, mux_PC, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("MuxPC");
+		printf(THREAD_INIT_FAIL("MuxPC"));
 		exit(0);
 	}
 	if (pthread_create(&ports_PC_handle, 0, ports_PC, NULL) != 0) {
-		cout << THREAD_INIT_FAIL("AND and OR for PC");
+		printf(THREAD_INIT_FAIL("AND and OR for PC"));
 		exit(0);
 	}
+
 }

@@ -17,8 +17,8 @@
 
 int ALUControl;
 
-bool nodClock = false;
-bool debugMode = false;
+int nodClock = 0;
+int debugMode = 0;
 
 void convertTextMIPStoBinMIPS(FILE* origin, FILE* decoded) {
 	fseek(origin, 0, SEEK_END);
@@ -34,14 +34,14 @@ void convertTextMIPStoBinMIPS(FILE* origin, FILE* decoded) {
 		//TODO iterate through lines and convert
 	}
 	else {
-		std::cout << "Empty origin file" << std::endl;
+		printf("Empty origin file \n");
 		exit(0);
 	}
 }
 
 void fetchJobFromFile(const char* filename, const char* noExtensionFilename) {
 	FILE* origin = fopen(filename, "rb");
-	bincode = fopen(strcat((char*) noExtensionFilename, ".bin"), "wb+");
+	bincode = fopen(noExtensionFilename, "wb+");
 
 	convertTextMIPStoBinMIPS(origin, bincode);
 
@@ -49,12 +49,13 @@ void fetchJobFromFile(const char* filename, const char* noExtensionFilename) {
 }
 
 void simulateClockDelay() {
+	long int i;
 	if (!nodClock)
-		for (long int i = 0; i < CLOCK_DELAY_TIME*1000; i++){}
+		for ( i = 0; i < CLOCK_DELAY_TIME*1000; i++){}
 }
 
 void disableClockDelay() {
-	nodClock = true;
+	nodClock = 1;
 }
 
 int hexToInt(char c){

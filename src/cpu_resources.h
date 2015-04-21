@@ -21,13 +21,12 @@
 #include "utils.h"
 #include "control_signals.h"
 #include "commonVariables.h"
-#include <list>
-#include <iomanip>
 
-struct UC_def {
+
+typedef struct UC_def {
 	SyncedInstruction job;
 	int cycle;
-};
+}UC_def;
 
 extern UC_def UC;
 

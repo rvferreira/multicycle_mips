@@ -20,11 +20,10 @@
 #include <semaphore.h>
 
 #include <stdio.h>
-#include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <fstream>
+
 #include <string.h>
 #include "mascara.h"
 
@@ -34,8 +33,8 @@
 #define CLOCK_DELAY_TIME 200000
 #define CYCLES_COUNT 5
 
-struct FetchedInstruction{
-	bool PCWriteCond,
+typedef struct FetchedInstruction{
+	int PCWriteCond,
 		PCWrite,
 		IorD,
 		MemRead,
@@ -51,16 +50,16 @@ struct FetchedInstruction{
 		ALUSrcA,
 		RegWrite,
 		RegDst;
-};
+}FetchedInstruction;
 
-struct SyncedInstruction{
+typedef struct SyncedInstruction{
 	FetchedInstruction controlSignals;
-};
+}SyncedInstruction;
 
 typedef struct { char byte[4]; } dataBlock;
 
 extern FILE* bincode;
-extern bool debugMode;
+extern int debugMode;
 
 /* General Purpose Functions */
 void fetchJobFromFile(const char* filename, const char* noExtensionFilename);

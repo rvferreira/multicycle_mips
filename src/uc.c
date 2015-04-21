@@ -15,7 +15,6 @@
 
 #include "uc.h"
 
-using namespace std;
 
 UC_def UC;
 
@@ -91,8 +90,8 @@ int nextCycle(int cycle) {
 
 	if (debugMode){
 		sem_wait(&printSync);
-		if (newCycle == -1) cout << "Terminate instruction found. Hasta la vista, Baby." << endl << endl;
-		else cout << PC << ": Entering cycle " << newCycle << endl;
+		if (newCycle == -1) printf("Terminate instruction found. Hasta la vista, Baby. \n\n");
+		else printf("%d: Entering cycle %d \n", PC, newCycle);
 		sem_post(&printSync);
 	}
 
@@ -122,39 +121,4 @@ void *uc_thread(void* thread_id) {
 		sem_post(&clock_free);
 	}
 	pthread_exit(0);
-}
-
-int processInput(int argc, char** argv, const char *option, const char *filename) {
-    char  *s1, *s2;
-    if (argc > 1) {
-        strcat(s1,argv[1]);
-        filename = s1;
-    }
-    if (argc > 2) {
-        strcat(s2,argv[2]);
-    }
-
-    if (s1[0] == '-') {
-        option = s1;
-        filename = s2;
-    }
-    else if (s2[0] == '-') {
-        option = s2;
-        filename = s1;
-    }
-
-    if (argc < 2 || argc > 3) {
-        return 0;
-    }
-
-    const char *options[3];
-
-    options[0] = "--nodclock";
-    options[1] = "--debug";
-
-    if (!strcmp(option, "--help")) {
-        printf("%s \n", HELP);
-        exit(1);
-    }
-    return 1;
 }
