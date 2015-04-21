@@ -102,7 +102,10 @@ void memoryPrint(){
     int i;
     printf("Memory Final State: \n \n");
         for ( i = 0; i < memorySize; i++)
-            printf(" %#.8x \n",(memoryBank[i] & 0xFFFFFFFF)); 
+	   if ((memoryBank[i] & 0xFFFFFFFF))
+            	printf("%#.8x \n",(memoryBank[i] & 0xFFFFFFFF)); 
+	   else 
+		printf("0x00000000 \n");
 
 }
 

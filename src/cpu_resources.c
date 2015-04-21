@@ -108,7 +108,8 @@ void *memory_load(void *thread_id) {
 		}
 
 		memoryBank[i] = buffer;
-		printf(" %#.8x \n",((memoryBank[i] & 0xFFFFFFFF) >> 0));
+ 		printf("%#.8x \n",(memoryBank[i] & 0xFFFFFFFF)); 
+		
 	}
 
 	
