@@ -24,10 +24,7 @@ int debugMode = 0;
 *	NOME:		convertTextMIPStoBinMIPS
 *	FUNÇÃO:		Converte o arquivo de texto da instrução para Binário
 *
-*			Tipo					Descrição
-*     			--------			-----------
-*			FILE*
-*			FILE*
+*	Obs.: A implementar conversão
 *
 *	RETORNO:	void
 *******************************************************************************/
@@ -55,7 +52,7 @@ void convertTextMIPStoBinMIPS(FILE* origin, FILE* decoded) {
 *
 *			Tipo				Descrição
 *     			--------		-----------
-*			const char*			arquivo onde estarão as insturções
+*			const char*			arquivo onde estarão as instruções
 *			const char*			arquivo onde serão colocadas as instruções em binário
 *
 *	RETORNO:	void

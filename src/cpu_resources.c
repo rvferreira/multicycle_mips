@@ -14,7 +14,6 @@
 
 #include "cpu_resources.h"
 
-
 FILE *bincode;
 int *memoryBank, memorySize;
 int registersBank[32];
@@ -28,37 +27,46 @@ int PC, MDR, IR, A, B, AluOut;
  *
  * */
 
-sem_t 	UC_free,							//UC livre para realizar o próximo ciclo
-		UC_mux_memAddress,					//mux_memAddress liberado depois de um novo ciclo acionado
-		UC_mux_WriteRegIR,					//mux_WriteRegIR liberado depois de um novo ciclo acionado
-		UC_mux_WriteDataIR,					//mux_WriteDataIR liberado depois de um novo ciclo acionado
-		UC_mux_ALUA,						//mux_ALUA liberado depois de um novo ciclo acionado
-		UC_mux_ALUB,						//mux_ALUB liberado depois de um novo ciclo acionado
-		UC_mux_PC,							//mux_PC liberado depois de um novo ciclo acionado
+sem_t UC_free,							//UC livre para realizar o próximo ciclo
+		UC_mux_memAddress,//mux_memAddress liberado depois de um novo ciclo acionado
+		UC_mux_WriteRegIR,//mux_WriteRegIR liberado depois de um novo ciclo acionado
+		UC_mux_WriteDataIR,	//mux_WriteDataIR liberado depois de um novo ciclo acionado
+		UC_mux_ALUA,		//mux_ALUA liberado depois de um novo ciclo acionado
+		UC_mux_ALUB,		//mux_ALUB liberado depois de um novo ciclo acionado
+		UC_mux_PC,			//mux_PC liberado depois de um novo ciclo acionado
 		invalid_opcode;						//
 
 /*Todos os semáforos "free" são utilizados para que o próprio componente saiba se ele mesmo
  * está disponível para escrita.*/
-sem_t 	clock_free, clock_updated,									//
-		PC_updated, PC_free,										//PC updated para mux_memAddress
-		mux_memoryAdress_updated, mux_memoryAdress_free,			//mux_memoryAdress udpated para clockedMemoryaccess
-		clockedMemory_updated, clockedMemory_free, 					//clockedMemory udpated para instructionsRegister
-		MDR_updated, MDR_free,										//MDR updated para mux_WriteDataIR
-		instructionRegister_updated, instructionRegister_free,		//instructionRegister updated para mux_WriteRegIR
-		mux_WriteRegIR_updated, mux_WriteRegIR_free, 				//mux_WriteRegIR updated para registers
-		mux_WriteDataIR_updated, mux_WriteDataIR_free,				//mux_WriteDataIR updated para registers
-		registers_updated_0, registers_updated_1,					//registers_updated_0 e registers_updated_1 updated para ALUA e ALUB
-		registers_free_0, registers_free_1,
-		IR_0_free, IR_0_updated, IR_1_free, IR_1_updated,			//IR_0 updated para signExtend, IR_1 updated para shiftLeft2_muxPC
-		IR_2_free, IR_2_updated,									//IR_2 updated para ALUControl
-		signExtend_updated, signExtend_free,						//signExtend updated para mux_ALUB
-		shiftLeft2_muxPC_updated, shiftLeft2_muxPC_free,			//shiftLeft2_muxPC updated para mux_PC
-		shiftLeft2_muxALUB_updated, shiftLeft2_muxALUB_free, 		//shiftLeft2_muxALUB updated para mux_ALUB
-		mux_ALUA_updated, mux_ALUA_free, 							//mux_ALUA updated para ALU
-		mux_ALUB_updated, mux_ALUB_free, 							//mux_ALUB updated para ALU
-		ALUControl_updated, ALUControl_free, 						//ALUControl updated para ALU
-		ALU_updated, ALU_free, 										//ALU_updated updated para mux_PC
-		mux_PC_updated, mux_PC_free;								//mux_PC updated para ports_PC
+sem_t clock_free,
+		clock_updated,									//
+		PC_updated,
+		PC_free,								//PC updated para mux_memAddress
+		mux_memoryAdress_updated,
+		mux_memoryAdress_free,//mux_memoryAdress udpated para clockedMemoryaccess
+		clockedMemory_updated,
+		clockedMemory_free, //clockedMemory udpated para instructionsRegister
+		MDR_updated,
+		MDR_free,							//MDR updated para mux_WriteDataIR
+		instructionRegister_updated,
+		instructionRegister_free,//instructionRegister updated para mux_WriteRegIR
+		mux_WriteRegIR_updated,
+		mux_WriteRegIR_free, 			//mux_WriteRegIR updated para registers
+		mux_WriteDataIR_updated,
+		mux_WriteDataIR_free,			//mux_WriteDataIR updated para registers
+		registers_updated_0,
+		registers_updated_1,//registers_updated_0 e registers_updated_1 updated para ALUA e ALUB
+		registers_free_0, registers_free_1, IR_0_free, IR_0_updated, IR_1_free,
+		IR_1_updated,//IR_0 updated para signExtend, IR_1 updated para shiftLeft2_muxPC
+		IR_2_free, IR_2_updated,				//IR_2 updated para ALUControl
+		signExtend_updated, signExtend_free,//signExtend updated para mux_ALUB
+		shiftLeft2_muxPC_updated, shiftLeft2_muxPC_free,//shiftLeft2_muxPC updated para mux_PC
+		shiftLeft2_muxALUB_updated, shiftLeft2_muxALUB_free, //shiftLeft2_muxALUB updated para mux_ALUB
+		mux_ALUA_updated, mux_ALUA_free, 			//mux_ALUA updated para ALU
+		mux_ALUB_updated, mux_ALUB_free, 			//mux_ALUB updated para ALU
+		ALUControl_updated, ALUControl_free, 	//ALUControl updated para ALU
+		ALU_updated, ALU_free, 				//ALU_updated updated para mux_PC
+		mux_PC_updated, mux_PC_free;			//mux_PC updated para ports_PC
 
 sem_t printSync;
 
@@ -66,42 +74,43 @@ pthread_t uc_handle, memory_handle, clockedMemory_handle,
 		instructionRegister_handle, mux_memoryAdress_handle,
 		mux_WriteRegIR_handle, mux_WriteDataIR_handle, signExtend_handle,
 		shiftLeft2_muxPC_handle, shiftLeft2_muxALUB_handle, mux_ALUA_handle,
-		ALUControl_handle, ALU_handle, mux_ALUB_handle, mux_PC_handle, ports_PC_handle,
-		registers_handle;
+		ALUControl_handle, ALU_handle, mux_ALUB_handle, mux_PC_handle,
+		ports_PC_handle, registers_handle;
 
 /*******************************************************************************
-*	NOME:		createAndEnqueueJob
-*	FUNÇÃO:		Atribui os sinais de controle na estrutura SyncedInstruction
-*
-*	DESCRIÇÃO:	Cria um novo job e seta os sinais de controle para iniciar o
-*	ciclo 0.
-*
-*	RETORNO:	void
-*******************************************************************************/
-void createAndEnqueueJob(int isNop) {
-	SyncedInstruction *newJob;
+ *	NOME:		createAndEnqueueJob
+ *	FUNÇÃO:		Atribui os sinais de controle na estrutura SyncedInstruction
+ *
+ *	DESCRIÇÃO:	Cria um novo job e seta os sinais de controle para iniciar o
+ *	ciclo 0.
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
+void createAndEnqueueJob() {
+	SyncedInstruction *newJob = 0;
 	setControlSignals(newJob, 0);
 }
 
 /*******************************************************************************
-*	NOME:		memory_load
-*	FUNÇÃO:		Carrega as instruções, inicializa a memória, os registradores e
-*				PC
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		memory_load
+ *	FUNÇÃO:		Carrega as instruções, inicializa a memória, os registradores e
+ *				PC
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *memory_load(void *thread_id) {
 	/*memory load*/
 	fseek(bincode, 0, SEEK_END);
 	int size = (ftell(bincode) - 1) / 8;
-	printf("%s We have found %d lines of code.  \n %s \n",SEPARATOR,size,SEPARATOR);
-			
+	printf("%sWe have found %d lines of code.  \n%s \n", SEPARATOR, size,
+			SEPARATOR);
+
 	rewind(bincode);
-	
+
 	if (!size) {
 		printf("Oops, there's nothing to be executed. \n");
 		exit(0);
@@ -118,7 +127,7 @@ void *memory_load(void *thread_id) {
 	for (i = 0; i < size; i++) {
 
 		buffer = 0x00000000;
-		int j;	
+		int j;
 		for (j = 0; j < 8; j++) {
 			readChar = (char) fgetc(bincode);
 			if (readChar == '\n') {
@@ -130,21 +139,20 @@ void *memory_load(void *thread_id) {
 		}
 
 		memoryBank[i] = buffer;
- 		printf("%#.8x \n",(memoryBank[i] & 0xFFFFFFFF)); 
-		
+		printf("%#.8x \n", (memoryBank[i] & 0xFFFFFFFF));
+
 	}
 
-	
 	printf(SEPARATOR);
 	fclose(bincode);
 
 	/* registers load */
-	
-	for (i = 0; i < 32; i++){
+
+	for (i = 0; i < 32; i++) {
 		registersBank[i] = i;
 	}
 
-	for (i = size; i < memorySize; i++){
+	for (i = size; i < memorySize; i++) {
 		memoryBank[i] = 0;
 	}
 
@@ -158,13 +166,13 @@ void *memory_load(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		refreshBuffers
-*	FUNÇÃO:		Coloca nos registradores os valores do último ciclo que estavam
-*				na variável auxiliar
-*
-*	RETORNO:	void
-*******************************************************************************/
-void refreshBuffers(){
+ *	NOME:		refreshBuffers
+ *	FUNÇÃO:		Coloca nos registradores os valores do último ciclo que estavam
+ *				na variável auxiliar
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
+void refreshBuffers() {
 	MDR = memory_output;
 	A = readData1;
 	B = readData2;
@@ -172,27 +180,27 @@ void refreshBuffers(){
 }
 
 /*******************************************************************************
-*	NOME:		mux_memoryAddress
-*	FUNÇÃO:		Thread do componente mux_memoryAddress com todas as suas operações.
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		mux_memoryAddress
+ *	FUNÇÃO:		Thread do componente mux_memoryAddress com todas as suas operações.
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *mux_memoryAdress(void *thread_id) {
 	while (1) {
 		sem_wait(&UC_mux_memAddress);
 		sem_wait(&mux_memoryAdress_free);
 		sem_wait(&PC_updated);
 
-
 		if (!UC.job.controlSignals.IorD) {
 			mux_memoryAdress_output = PC / 4;
 			if (debugMode) {
 				sem_wait(&printSync);
-				printf("%d : Mux to Memory Address has received PC as %d \n",PC,mux_memoryAdress_output);
+				printf("%d : Mux to Memory Address has received PC as %d \n",
+						PC, mux_memoryAdress_output);
 				sem_post(&printSync);
 			}
 		}
@@ -201,7 +209,8 @@ void *mux_memoryAdress(void *thread_id) {
 			mux_memoryAdress_output = AluOut;
 			if (debugMode) {
 				sem_wait(&printSync);
-				printf("%d: Mux to Memory Address has received AluOut as %d \n",PC,mux_memoryAdress_output);
+				printf("%d: Mux to Memory Address has received AluOut as %d \n",
+						PC, mux_memoryAdress_output);
 				sem_post(&printSync);
 			}
 		}
@@ -213,15 +222,15 @@ void *mux_memoryAdress(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		clockedMemoryAccess
-*	FUNÇÃO:		Thread do componente MemoryAccess com todas as suas operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		clockedMemoryAccess
+ *	FUNÇÃO:		Thread do componente MemoryAccess com todas as suas operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *clockedMemoryAccess(void *thread_id) {
 	while (1) {
 		sem_wait(&mux_memoryAdress_updated);
@@ -236,7 +245,9 @@ void *clockedMemoryAccess(void *thread_id) {
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			printf("%d : Memory is accessing the Address %d received from Mux to Memory Address \n",PC, mux_memoryAdress_output);
+			printf(
+					"%d : Memory is accessing the Address %d received from Mux to Memory Address \n",
+					PC, mux_memoryAdress_output);
 			sem_post(&printSync);
 		}
 
@@ -247,16 +258,16 @@ void *clockedMemoryAccess(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		instructionRegister
-*	FUNÇÃO:		Thread do componente instructionRegister com todas as suas
-*				operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		instructionRegister
+ *	FUNÇÃO:		Thread do componente instructionRegister com todas as suas
+ *				operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *instructionRegister(void *thread_id) {
 	while (1) {
 
@@ -272,8 +283,8 @@ void *instructionRegister(void *thread_id) {
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			printf("%d: IR has received Memory Data \n",PC); 
-			printf("%d: resulting in %#.8x \n",PC,IR); 
+			printf("%d: IR has received Memory Data \n", PC);
+			printf("%d: resulting in %#.8x \n", PC, IR);
 			sem_post(&printSync);
 		}
 
@@ -282,7 +293,7 @@ void *instructionRegister(void *thread_id) {
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			printf("%d: MDR has received Memory Data \n",PC);
+			printf("%d: MDR has received Memory Data \n", PC);
 			sem_post(&printSync);
 		}
 
@@ -296,32 +307,33 @@ void *instructionRegister(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		mux_WriteRegIR
-*	FUNÇÃO:		Thread do componente mux_WriteRegIR com todas as suas operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		mux_WriteRegIR
+ *	FUNÇÃO:		Thread do componente mux_WriteRegIR com todas as suas operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *mux_WriteRegIR(void *thread_id) {
 	while (1) {
 		sem_wait(&UC_mux_WriteRegIR);
 		sem_wait(&instructionRegister_updated);
 		sem_wait(&mux_WriteRegIR_free);
 
-		if (UC.job.controlSignals.RegDst == 0){
+		if (UC.job.controlSignals.RegDst == 0) {
 			mux_writeReg_output = (int) ((IR & separa_rt) >> 16);
 		}
 
-		else if (UC.job.controlSignals.RegDst == 1){
+		else if (UC.job.controlSignals.RegDst == 1) {
 			mux_writeReg_output = (int) ((IR & separa_rd) >> 11);
 		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			printf("%d: Mux Write to Register received the bits from IR \n",PC);
+			printf("%d: Mux Write to Register received the bits from IR \n",
+					PC);
 			sem_post(&printSync);
 		}
 
@@ -332,32 +344,32 @@ void *mux_WriteRegIR(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		mux_WriteDataIR
-*	FUNÇÃO:		Thread do componente mux_WriteDataIR com todas as suas operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		mux_WriteDataIR
+ *	FUNÇÃO:		Thread do componente mux_WriteDataIR com todas as suas operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *mux_WriteDataIR(void *thread_id) {
 	while (1) {
 		sem_wait(&UC_mux_WriteDataIR);
 		sem_wait(&MDR_updated);
 		sem_wait(&mux_WriteDataIR_free);
 
-		if (UC.job.controlSignals.MemToReg == 0){
+		if (UC.job.controlSignals.MemToReg == 0) {
 			mux_writeData_output = AluOut;
 		}
 
-		if (UC.job.controlSignals.MemToReg == 1){
+		if (UC.job.controlSignals.MemToReg == 1) {
 			mux_writeData_output = MDR;
 		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			printf("%d: Mux Write Data received data from MDR\n",PC);
+			printf("%d: Mux Write Data received data from MDR\n", PC);
 			sem_post(&printSync);
 		}
 
@@ -368,15 +380,15 @@ void *mux_WriteDataIR(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		registers
-*	FUNÇÃO:		Thread do componente registers com toda as suas operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		registers
+ *	FUNÇÃO:		Thread do componente registers com toda as suas operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *registers(void *thread_id) {
 	while (1) {
 		sem_wait(&mux_WriteRegIR_updated);
@@ -387,18 +399,19 @@ void *registers(void *thread_id) {
 		readData1 = registersBank[(int) ((IR & separa_rs) >> 21)];
 		readData2 = registersBank[(int) ((IR & separa_rt) >> 16)];
 
-		if (UC.job.controlSignals.RegWrite == 1){
+		if (UC.job.controlSignals.RegWrite == 1) {
 			registersBank[mux_writeReg_output] = mux_writeData_output;
 			if (debugMode) {
 				sem_wait(&printSync);
-				printf("    Word  %d wrote on register %d \n",mux_writeData_output,mux_writeReg_output);
+				printf("    Word  %d wrote on register %d \n",
+						mux_writeData_output, mux_writeReg_output);
 				sem_post(&printSync);
 			}
 		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			printf("%d: Registers Bank being accessed \n",PC);
+			printf("%d: Registers Bank being accessed \n", PC);
 			printf("     A has received %d \n", A);
 			printf("     B has received %d \n", B);
 			sem_post(&printSync);
@@ -413,15 +426,15 @@ void *registers(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		signExtend
-*	FUNÇÃO:		Thread do componente signExtend com toda as suas operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		signExtend
+ *	FUNÇÃO:		Thread do componente signExtend com toda as suas operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *signExtend(void *thread_id) {
 	while (1) {
 
@@ -429,7 +442,8 @@ void *signExtend(void *thread_id) {
 		sem_wait(&signExtend_free);
 
 		signExtend_output = (int) (IR & 0x0000FFFF);
-		if (IR & 0x00008000) signExtend_output |= 0xFFFF0000;
+		if (IR & 0x00008000)
+			signExtend_output |= 0xFFFF0000;
 
 		if (debugMode) {
 			sem_wait(&printSync);
@@ -445,21 +459,21 @@ void *signExtend(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		shiftLeft2_muxPC
-*	FUNÇÃO:		Thread do componente shiftLeft2_muxPC com toda as suas operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		shiftLeft2_muxPC
+ *	FUNÇÃO:		Thread do componente shiftLeft2_muxPC com toda as suas operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *shiftLeft2_muxPC(void *thread_id) {
 	while (1) {
 		sem_wait(&IR_1_updated);
 		sem_wait(&shiftLeft2_muxPC_free);
 
-		ssl_muxPC_output = (IR&0x03FFFFFF) << 2;
+		ssl_muxPC_output = (IR & 0x03FFFFFF) << 2;
 
 		if (debugMode) {
 			sem_wait(&printSync);
@@ -474,15 +488,15 @@ void *shiftLeft2_muxPC(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		shiftLeft2_muxALUB
-*	FUNÇÃO:		Thread do componente shiftLeft2_muxALUB com toda as suas operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		shiftLeft2_muxALUB
+ *	FUNÇÃO:		Thread do componente shiftLeft2_muxALUB com toda as suas operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *shiftLeft2_muxALUB(void *thread_id) {
 	while (1) {
 		sem_wait(&signExtend_updated);
@@ -503,15 +517,15 @@ void *shiftLeft2_muxALUB(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		mux_ALUA
-*	FUNÇÃO:		Thread do componente mux_ALUA com toda as suas operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		mux_ALUA
+ *	FUNÇÃO:		Thread do componente mux_ALUA com toda as suas operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *mux_ALUA(void *thread_id) {
 	while (1) {
 		sem_wait(&UC_mux_ALUA);
@@ -521,14 +535,15 @@ void *mux_ALUA(void *thread_id) {
 
 		if (UC.job.controlSignals.ALUSrcA == 0) {
 			mux_ALUA_output = PC;
-		}
-		else if (UC.job.controlSignals.ALUSrcA == 1) {
+		} else if (UC.job.controlSignals.ALUSrcA == 1) {
 			mux_ALUA_output = A;
 		}
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			printf("%d: Buffer A from ALU has received the data from the Registers \n", PC);
+			printf(
+					"%d: Buffer A from ALU has received the data from the Registers \n",
+					PC);
 			sem_post(&printSync);
 		}
 
@@ -540,15 +555,15 @@ void *mux_ALUA(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		mux_ALUB
-*	FUNÇÃO:		Thread do componente mux_ALUB com toda as suas operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		mux_ALUB
+ *	FUNÇÃO:		Thread do componente mux_ALUB com toda as suas operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *mux_ALUB(void *thread_id) {
 	while (1) {
 		sem_wait(&UC_mux_ALUB);
@@ -578,7 +593,9 @@ void *mux_ALUB(void *thread_id) {
 
 		if (debugMode) {
 			sem_wait(&printSync);
-			printf("%d: Buffer B from ALU has received the data from the Registers \n", PC);
+			printf(
+					"%d: Buffer B from ALU has received the data from the Registers \n",
+					PC);
 			sem_post(&printSync);
 		}
 
@@ -590,19 +607,19 @@ void *mux_ALUB(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		ALUControl
-*	FUNÇÃO:		Thread do componente ALUControl com toda as suas operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
-void *ALUControl (void *thread_id){
-	
-	while (1){
-		
+ *	NOME:		ALUControl
+ *	FUNÇÃO:		Thread do componente ALUControl com toda as suas operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
+void *ALUControl(void *thread_id) {
+
+	while (1) {
+
 		/* esperamos o IR ficar pronto e logo após liberamos o controle da ULA */
 		sem_wait(&IR_2_updated);
 		sem_wait(&ALUControl_free);
@@ -612,7 +629,7 @@ void *ALUControl (void *thread_id){
 				&& UC.job.controlSignals.ALUOp1 == 0) {
 			// código de operação para soma
 			ALUControl_output = 2;
-		}	
+		}
 
 		//se ALUOP = 01, então é uma BEQ
 		if (UC.job.controlSignals.ALUOp0 == 0
@@ -626,37 +643,37 @@ void *ALUControl (void *thread_id){
 				&& UC.job.controlSignals.ALUOp1 == 0) {
 
 			// isolando os 4 últimos bits para descobrir que operação do tipo-R signfica
-			switch (IR&0x0000000F){
-				
-				//se for 0 é uma ADD
-				case 0:{
-					// código da operação para soma
-					ALUControl_output = 2;
-					break;
-				}				
+			switch (IR & 0x0000000F) {
+
+			//se for 0 é uma ADD
+			case 0: {
+				// código da operação para soma
+				ALUControl_output = 2;
+				break;
+			}
 				//se for 2 é uma SUB
-				case 2:{
-					// código da operação para subtração
-					ALUControl_output = 6;
-					break;
-				}				
+			case 2: {
+				// código da operação para subtração
+				ALUControl_output = 6;
+				break;
+			}
 				// se for 4 é uma AND	
-				case 4:{
-					// código de operação para and
-					ALUControl_output = 0;
-					break;
-				}				
+			case 4: {
+				// código de operação para and
+				ALUControl_output = 0;
+				break;
+			}
 				// se for 5 é uma OR 	
-				case 5:{
-					// código de operação para OR
-					ALUControl_output = 1;
-					break;	
-				}
+			case 5: {
+				// código de operação para OR
+				ALUControl_output = 1;
+				break;
+			}
 				// se for 10 é uma SLT	
-				case 10:
-					// código de operação para SLT
-					ALUControl_output = 7;
-					break;	
+			case 10:
+				// código de operação para SLT
+				ALUControl_output = 7;
+				break;
 			}
 		}
 
@@ -667,15 +684,15 @@ void *ALUControl (void *thread_id){
 }
 
 /*******************************************************************************
-*	NOME:		ALU
-*	FUNÇÃO:		Thread do componente ALU com toda as suas operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		ALU
+ *	FUNÇÃO:		Thread do componente ALU com toda as suas operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *ALU(void *thread_id) {
 	while (1) {
 		sem_wait(&mux_ALUA_updated);
@@ -689,7 +706,8 @@ void *ALU(void *thread_id) {
 
 			if (debugMode) {
 				sem_wait(&printSync);
-				printf("%d: ALU is summing up %d and %d \n", PC, mux_ALUA_output,mux_ALUB_output);
+				printf("%d: ALU is summing up %d and %d \n", PC,
+						mux_ALUA_output, mux_ALUB_output);
 				sem_post(&printSync);
 			}
 		}
@@ -700,7 +718,8 @@ void *ALU(void *thread_id) {
 
 			if (debugMode) {
 				sem_wait(&printSync);
-				printf("%d: ALU is subtracting up %d and %d \n", PC, mux_ALUA_output,mux_ALUB_output);
+				printf("%d: ALU is subtracting up %d and %d \n", PC,
+						mux_ALUA_output, mux_ALUB_output);
 				sem_post(&printSync);
 			}
 		}
@@ -710,7 +729,8 @@ void *ALU(void *thread_id) {
 			ALU_output = mux_ALUA_output & mux_ALUB_output;
 			if (debugMode) {
 				sem_wait(&printSync);
-				printf("%d: ALU is operating logical AND %d and %d \n", PC, mux_ALUA_output,mux_ALUB_output);
+				printf("%d: ALU is operating logical AND %d and %d \n", PC,
+						mux_ALUA_output, mux_ALUB_output);
 				sem_post(&printSync);
 			}
 		}
@@ -720,23 +740,27 @@ void *ALU(void *thread_id) {
 			ALU_output = mux_ALUA_output | mux_ALUB_output;
 			if (debugMode) {
 				sem_wait(&printSync);
-				printf("%d: ALU is operating logical OR %d and %d \n", PC, mux_ALUA_output,mux_ALUB_output);
+				printf("%d: ALU is operating logical OR %d and %d \n", PC,
+						mux_ALUA_output, mux_ALUB_output);
 				sem_post(&printSync);
 			}
 		}
 
 		// se o código de operação for 7 é um SLT
 		if (ALUControl_output == 7) {
-			ALU_output =  mux_ALUA_output < mux_ALUB_output ? 1 : 0;
+			ALU_output = mux_ALUA_output < mux_ALUB_output ? 1 : 0;
 			if (debugMode) {
 				sem_wait(&printSync);
-				printf("%d: ALU is operating logical SLT %d and %d \n", PC, mux_ALUA_output,mux_ALUB_output);
+				printf("%d: ALU is operating logical SLT %d and %d \n", PC,
+						mux_ALUA_output, mux_ALUB_output);
 				sem_post(&printSync);
 			}
 		}
 
-		if (ALU_output == 0) ALU_zero_output = 1;
-		else ALU_zero_output = 0;
+		if (ALU_output == 0)
+			ALU_zero_output = 1;
+		else
+			ALU_zero_output = 0;
 
 		sem_post(&ALU_updated);
 		sem_post(&ALUControl_free);
@@ -748,22 +772,21 @@ void *ALU(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		mux_PC
-*	FUNÇÃO:		Thread do componente mux_PC com toda as suas operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		mux_PC
+ *	FUNÇÃO:		Thread do componente mux_PC com toda as suas operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *mux_PC(void *thread_id) {
 	while (1) {
 		sem_wait(&UC_mux_PC);
 		sem_wait(&mux_PC_free);
 		sem_wait(&ALU_updated);
 		sem_wait(&shiftLeft2_muxPC_updated);
-
 
 		if (UC.job.controlSignals.PCSource0 == 0
 				&& UC.job.controlSignals.PCSource1 == 0) {
@@ -777,7 +800,7 @@ void *mux_PC(void *thread_id) {
 
 		if (UC.job.controlSignals.PCSource0 == 1
 				&& UC.job.controlSignals.PCSource1 == 0) {
-			mux_PC_output = (0x0FFFFFFF&ssl_muxPC_output)|(0xF0000000&PC);
+			mux_PC_output = (0x0FFFFFFF & ssl_muxPC_output) | (0xF0000000 & PC);
 		}
 
 		if (debugMode) {
@@ -785,7 +808,6 @@ void *mux_PC(void *thread_id) {
 			printf("Cycle finished!\n\n");
 			sem_post(&printSync);
 		}
-
 
 		sem_post(&shiftLeft2_muxPC_free);
 		sem_post(&ALU_free);
@@ -795,24 +817,25 @@ void *mux_PC(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		ports_PC
-*	FUNÇÃO:		Thread do componente mux_PC com toda as suas operações
-*
-*			Tipo					Descrição
-*     			--------			-----------
-*			thread_id*				Identificação da thread
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		ports_PC
+ *	FUNÇÃO:		Thread do componente mux_PC com toda as suas operações
+ *
+ *			Tipo					Descrição
+ *     			--------			-----------
+ *			thread_id*				Identificação da thread
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void *ports_PC(void *thread_id) {
-	while(1){
+	while (1) {
 		sem_wait(&mux_PC_updated);
 		sem_wait(&PC_free);
 		sem_wait(&PC_free);
 
-		if ((ALU_zero_output && UC.job.controlSignals.PCWriteCond) || UC.job.controlSignals.PCWrite){
+		if ((ALU_zero_output && UC.job.controlSignals.PCWriteCond)
+				|| UC.job.controlSignals.PCWrite) {
 			PC = mux_PC_output;
-			if (debugMode){
+			if (debugMode) {
 				sem_wait(&printSync);
 				printf("PC updated to %d !! =) \n\n", PC);
 				sem_post(&printSync);
@@ -828,11 +851,11 @@ void *ports_PC(void *thread_id) {
 }
 
 /*******************************************************************************
-*	NOME:		semaphores_init
-*	FUNÇÃO:		Inicialização dos semáforos
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		semaphores_init
+ *	FUNÇÃO:		Inicialização dos semáforos
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void semaphores_init() {
 
 	sem_init(&clock_updated, 0, 0);
@@ -911,11 +934,11 @@ void semaphores_init() {
 }
 
 /*******************************************************************************
-*	NOME:		resourcesInir
-*	FUNÇÃO:		Inicialização de todos so recursos (semáforos e threads)
-*
-*	RETORNO:	void
-*******************************************************************************/
+ *	NOME:		resourcesInir
+ *	FUNÇÃO:		Inicialização de todos so recursos (semáforos e threads)
+ *
+ *	RETORNO:	void
+ *******************************************************************************/
 void resourcesInit() {
 	semaphores_init();
 

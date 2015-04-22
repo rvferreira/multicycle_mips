@@ -12,13 +12,7 @@
  *      Paulo Sérgio Souza  
  ******************************************************************************* */
 
-
-//#include <set>
-//#include <map>
-
 #include "uc.h"
-
-//using namespace std;
 
 #define PROGRAM_NAME "UFMips"
 
@@ -41,8 +35,6 @@ Fun fact: UFMips stands for Ultra Foda Mips.\n"
 #define BAD_OPTION   "Bad option: "
 #define NO_SUCH_FILE "No such file: "
 
-//using namespace std;
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -57,8 +49,8 @@ void registersPrint();
 *
 *			Tipo					Descrição
 *     			--------			-----------
-*			int
-*			char
+*			char					argv[1] = arquivo de leitura
+*									argv[2] = opção opcional
 *
 *	DESCRIÇÃO: No início do programa, escolherá o modo no qual ele será executado
 *	(como, por exemplo, debug). Depois iniciará a o MIPS multiciclo.
@@ -75,7 +67,7 @@ int main(int argc, char** argv) {
     }
 
     // Remove the extension
-    printf("%sFetching instructions from %s\n ", SEPARATOR, argv[1]) ;
+    printf("%sFetching instructions from %s\n", SEPARATOR, argv[1]) ;
 
 
     if (!strcmp(argv[2],"--nodclock")) {
@@ -153,16 +145,9 @@ void registersPrint(){
 
 /*******************************************************************************
 *	NOME:		processInput
-*	FUNÇÃO:
+*	FUNÇÃO:		Ordena os parametros de entrada
 *
-*			Tipo					Descrição
-*     			--------			-----------
-*			int
-*			char**
-*			const char
-*			const char*
-*
-*	RETORNO:	void
+*	RETORNO:	int: retorna se foi completou ou não
 *******************************************************************************/
 int processInput(int argc, char** argv, const char *option, const char *filename) {
     char  *s1="", *s2="";
