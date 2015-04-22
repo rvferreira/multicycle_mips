@@ -1,0 +1,4 @@
+teste1 - avalia funcionamento das funcoes tipo-R (add, sub, and, or e slt) adicionando
+teste2 - checa o funcionamento de sw e lw
+teste3 - loop infinito usando beq
+teste4 - loop infinito usando jump
