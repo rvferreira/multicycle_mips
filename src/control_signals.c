@@ -14,6 +14,23 @@
 
 #include "control_signals.h"
 
+/*******************************************************************************
+*	NOME:		controlSignalsAttrb
+*	FUNÇÃO:		Atribui os sinais de controle na estrutura SyncedInstruction
+*
+*			Tipo					Descrição
+*     			--------			-----------
+*			SyncedInstruction*		Struct onde se encontram os sinais de controle
+*			buffer		 			Inteiro onde os sinais já tenham sido setados
+*
+*	DESCRIÇÃO:	Cada um dos sinais de controle é atribuído individualmente em
+* 	uma estrutura SyncedInstructions. Ela recebe como parâmetro um buffer onde
+* 	todos os sinais de controle do ciclo já foram testados. Desta forma, a função
+* 	fará uma comparação do buffer com a máscara de cada sinal de controle e o
+* 	atribuirá individualmente para 0 ou 1.
+*
+*	RETORNO:	void
+*******************************************************************************/
 void controlSignalsAttrb(SyncedInstruction *job, int buffer) {
 
 		job->controlSignals.PCWriteCond = (int)(buffer & ativa_PCWriteCond) ? 1 : 0;
@@ -34,6 +51,21 @@ void controlSignalsAttrb(SyncedInstruction *job, int buffer) {
 		job->controlSignals.RegDst = (int)(buffer & ativa_RegDst) ? 1 : 0;
 }
 
+/*******************************************************************************
+*	NOME:		setControlSignals
+*	FUNÇÃO:		Atribui os sinais de controle
+*
+*			Tipo					Descrição
+*     			--------			-----------
+*			SyncedInstruction*		Struct onde se encontram os sinais de controle
+*			cycle		 			Inteiro indicando em qual ciclo da CPU está
+*
+*	DESCRIÇÃO:	Tendo recebido como parâmetro o ciclo da CPU, atribuirá os sinais
+*	de controle a um inteiro auxiliar buffer de acordo com o ciclo no qual ela se
+*	encontra. A máscara é usada como auxiliar para fazer estas atribuições.
+*
+*	RETORNO:	void
+*******************************************************************************/
 void setControlSignals(SyncedInstruction *job, int cycle){
 
 	int buffer = 0;

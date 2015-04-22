@@ -49,7 +49,22 @@ Fun fact: UFMips stands for Ultra Foda Mips.\n"
 
 int processInput(int argc, char** argv, const char *option, const char *filename);
 void memoryPrint();
+void registersPrint();
 
+/*******************************************************************************
+*	NOME:		main
+*	FUNÇÃO:		Função principal
+*
+*			Tipo					Descrição
+*     			--------			-----------
+*			int
+*			char
+*
+*	DESCRIÇÃO: No início do programa, escolherá o modo no qual ele será executado
+*	(como, por exemplo, debug). Depois iniciará a o MIPS multiciclo.
+*
+*	RETORNO:	void
+*******************************************************************************/
 int main(int argc, char** argv) {
     const char *option = "";
     const char *filename = "";
@@ -90,6 +105,7 @@ int main(int argc, char** argv) {
 
     fflush(0);
     memoryPrint();
+    registersPrint();
 
     fflush(0);
     printf("\nPress any key to terminate.\n");
@@ -98,6 +114,12 @@ int main(int argc, char** argv) {
     return 1;
 }
 
+/*******************************************************************************
+*	NOME:		memoryPrint
+*	FUNÇÃO:		Imprime o conteúdo da memória
+*
+*	RETORNO:	void
+*******************************************************************************/
 void memoryPrint(){
     int i;
     printf("Memory Final State: \n \n");
@@ -109,6 +131,39 @@ void memoryPrint(){
 
 }
 
+/*******************************************************************************
+*	NOME:		memoryPrint
+*	FUNÇÃO:		Imprime o conteúdo dos registradores
+*
+*	RETORNO:	void
+*******************************************************************************/
+void registersPrint(){
+	int i;
+	printf("\nRegisters Final State: \n \n");
+	for(i = 0; i < 32; i++){
+		printf("Reg%d: %d\n", i, registersBank[i]);
+	}
+	printf("PC: %d\n", PC);
+	printf("MDR: %d\n", MDR);
+	printf("A: %d\n", A);
+	printf("B: %d\n", B);
+	printf("ALUOut: %d\n", AluOut);
+	printf("IR: %d\n", IR);
+}
+
+/*******************************************************************************
+*	NOME:		processInput
+*	FUNÇÃO:
+*
+*			Tipo					Descrição
+*     			--------			-----------
+*			int
+*			char**
+*			const char
+*			const char*
+*
+*	RETORNO:	void
+*******************************************************************************/
 int processInput(int argc, char** argv, const char *option, const char *filename) {
     char  *s1="", *s2="";
     if (argc > 1) {

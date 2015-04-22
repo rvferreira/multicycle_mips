@@ -12,7 +12,6 @@
  *		Paulo Sérgio Souza	
  ******************************************************************************* */
 
-
 #ifndef COMMONVARIABLES_H_
 #define COMMONVARIABLES_H_
 

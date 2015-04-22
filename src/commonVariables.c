@@ -12,6 +12,10 @@
  *		Paulo Sérgio Souza	
  ******************************************************************************* */
 
+/*Variáveis comuns utilizadas para passar o conteúdo de um registrador
+ * para outro entre as diferentes threads (são temporários até que a
+ * o valor possa ser atribuído aos registradores (PC, MDR,...) no ciclo correto */
+
 int mux_memoryAdress_output;
 int memory_output;
 int mux_ALUA_output;

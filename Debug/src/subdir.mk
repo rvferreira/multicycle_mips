@@ -3,8 +3,6 @@
 ################################################################################
 
 # Add inputs and outputs from these tool invocations to the build variables 
-
-
 C_SRCS += \
 ../src/commonVariables.c \
 ../src/control_signals.c \
@@ -12,9 +10,6 @@ C_SRCS += \
 ../src/main.c \
 ../src/uc.c \
 ../src/utils.c 
-
-CC_DEPS += \
-./src/uc.d 
 
 OBJS += \
 ./src/commonVariables.o \
@@ -40,6 +35,5 @@ src/%.o: ../src/%.c
 	gcc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
-
 
 

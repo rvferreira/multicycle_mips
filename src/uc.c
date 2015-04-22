@@ -18,7 +18,12 @@
 
 UC_def UC;
 
-//Tabela de Despacho para o ciclo 1
+/*******************************************************************************
+*	NOME:		dispatchTable
+*	FUNÇÃO:		Tabela de dispacho para quando estiver no ciclo 1
+*
+*	RETORNO:	int: próximo ciclo
+*******************************************************************************/
 int dispatchTable() {
 	
 	int cycle;
@@ -57,7 +62,12 @@ int dispatchTable() {
 	return cycle;
 }
 
-//Tabela de Despacho para o ciclo 2
+/*******************************************************************************
+*	NOME:		memory_load
+*	FUNÇÃO:		Tabela de dispacho para quando estiver no ciclo 2
+*
+*	RETORNO:	int: próximo ciclo
+*******************************************************************************/
 int dispatchTable2() {
 	
 	int cycle;
@@ -79,6 +89,12 @@ int dispatchTable2() {
 	return cycle; 
 }
 
+/*******************************************************************************
+*	NOME:		nextCycle
+*	FUNÇÃO:		Encontra o próximo ciclo a ser executado
+*
+*	RETORNO:	int: próximo ciclo
+*******************************************************************************/
 int nextCycle(int cycle) {
 	int newCycle = 0;
 	if ((cycle == 0) || (cycle == 3) || (cycle == 6))
@@ -98,6 +114,14 @@ int nextCycle(int cycle) {
 	return newCycle;
 }
 
+/*******************************************************************************
+*	NOME:		UC_update
+*	FUNÇÃO:		Atualiza a unidade de controle
+*
+*	DESCRIÇÃO:	Permitirá que cada um dos mux possa funcionar novamente
+*
+*	RETORNO:	void
+*******************************************************************************/
 void UC_update(){
 	refreshBuffers();
 	sem_post(&UC_mux_memAddress);
@@ -108,6 +132,19 @@ void UC_update(){
 	sem_post(&UC_mux_PC);
 }
 
+/*******************************************************************************
+*	NOME:		uc_thread
+*	FUNÇÃO:		Thread da Unidade de controle(UC) com todas as suas operações.
+*
+*			Tipo					Descrição
+*     			--------			-----------
+*			thread_id*				Identificação da thread
+*
+*	DESCRIÇÃO: 	Procura um novo ciclo, seta os sinais de controle para o novo
+*				ciclo.
+*
+*	RETORNO:	void
+*******************************************************************************/
 void *uc_thread(void* thread_id) {
 	UC.cycle = -1;
 	while (1) {

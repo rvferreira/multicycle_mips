@@ -33,6 +33,7 @@
 #define CLOCK_DELAY_TIME 200000
 #define CYCLES_COUNT 5
 
+/*Estrutura onde são guardados os sinais de controle*/
 typedef struct FetchedInstruction{
 	int PCWriteCond,
 		PCWrite,
