@@ -145,11 +145,17 @@ void *memory_load(void *thread_id) {
 
 	printf(SEPARATOR);
 	fclose(bincode);
-
+	
 	/* registers load */
 
 	for (i = 0; i < 32; i++) {
 		registersBank[i] = i;
+		registersBank[2] = 20;
+		registersBank[11] = 1;
+		registersBank[12] = 0;
+		registersBank[13] = 1;
+		
+				
 	}
 
 	for (i = size; i < memorySize; i++) {
